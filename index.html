@@ -205,7 +205,7 @@
             <div id="flipInner" class="flip-inner">
                 
                 <!-- FRONT: INFO COMERCIAL -->
-                <div class="flip-front">
+                <div class="flip-front" id="frontSide">
                     <button onclick="closeProductModal()" class="absolute top-5 right-5 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-800 shadow-sm z-10 active:scale-90 transition-transform">
                         <i class="fa-solid fa-xmark text-lg"></i>
                     </button>
@@ -251,10 +251,13 @@
                                 <span id="modalSku" class="text-xs font-mono font-bold text-slate-800 tracking-wider">0000</span>
                             </div>
                         </div>
+                        <div class="mt-4 text-center text-[8px] text-slate-300 font-black uppercase tracking-widest">
+                             Desliza para girar ficha técnica
+                        </div>
                     </div>
                 </div>
 
-                <!-- BACK: INFO TÉCNICA (TABS & SWIPE) -->
+                <!-- BACK: INFO TÉCNICA (TABS CLICK ONLY) -->
                 <div class="flip-back" id="backSide">
                     <div class="flex border-b border-slate-100">
                         <button onclick="switchTab('nutri')" id="tabNutri" class="tab-btn active">Nutricional</button>
@@ -290,8 +293,8 @@
                             </p>
                         </div>
                         
-                        <div class="mt-6 text-center text-[8px] text-slate-300 font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-chevron-left animate-pulse"></i> DESLIZA PARA LOGÍSTICA <i class="fa-solid fa-chevron-right animate-pulse"></i>
+                        <div class="mt-6 text-center text-[8px] text-slate-300 font-black uppercase tracking-widest">
+                             Desliza para volver al frente
                         </div>
                     </div>
 
@@ -314,8 +317,8 @@
                             </div>
                         </div>
 
-                        <div class="mt-6 text-center text-[8px] text-slate-300 font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-chevron-left animate-pulse"></i> DESLIZA PARA NUTRICIONAL <i class="fa-solid fa-chevron-right animate-pulse"></i>
+                        <div class="mt-6 text-center text-[8px] text-slate-300 font-black uppercase tracking-widest">
+                             Desliza para volver al frente
                         </div>
                     </div>
                 </div>
@@ -332,28 +335,29 @@
         let currentCat = 'TODOS';
         let categoryColorMap = {'TODOS': '#1e293b'};
         let activeTab = 'nutri';
+        let isFlipped = false;
 
-        // SWIPE LOGIC
+        // SWIPE TO FLIP LOGIC
         let touchstartX = 0;
         let touchendX = 0;
 
-        const backSide = document.getElementById('backSide');
-        backSide.addEventListener('touchstart', e => {
+        const flipInner = document.getElementById('flipInner');
+        
+        // El swipe ahora activa el giro total de la ficha
+        flipInner.addEventListener('touchstart', e => {
             touchstartX = e.changedTouches[0].screenX;
         }, {passive: true});
 
-        backSide.addEventListener('touchend', e => {
+        flipInner.addEventListener('touchend', e => {
             touchendX = e.changedTouches[0].screenX;
-            handleSwipe();
+            handleSwipeFlip();
         }, {passive: true});
 
-        function handleSwipe() {
+        function handleSwipeFlip() {
             const threshold = 60; 
-            if (touchendX < touchstartX - threshold) {
-                if (activeTab === 'nutri') switchTab('logo');
-            }
-            if (touchendX > touchstartX + threshold) {
-                if (activeTab === 'logo') switchTab('nutri');
+            // Si desliza a la izquierda o derecha lo suficiente, giramos la ficha
+            if (Math.abs(touchendX - touchstartX) > threshold) {
+                flipCard();
             }
         }
 
@@ -462,6 +466,7 @@
             const p = products.find(x => x.sku === sku);
             if (!p) return;
             
+            isFlipped = false;
             document.getElementById('flipContainer').classList.remove('is-flipped');
             document.getElementById('modalImg').src = p.img || 'https://via.placeholder.com/400';
             document.getElementById('modalTitle').innerText = p.nombre;
@@ -519,7 +524,11 @@
             document.getElementById('contentLogo').classList.toggle('hidden', isNutri);
         }
 
-        function flipCard() { document.getElementById('flipContainer').classList.toggle('is-flipped'); }
+        function flipCard() { 
+            isFlipped = !isFlipped;
+            document.getElementById('flipContainer').classList.toggle('is-flipped', isFlipped); 
+        }
+        
         function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
 
         window.onclick = (e) => { if (e.target.id == 'productModal') closeProductModal(); }
