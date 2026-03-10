@@ -8,10 +8,7 @@
     <!-- PWA & iOS Optimization -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Catálogo2026">
-    
-    <link rel="apple-touch-icon" href="icon.png">
-    <link rel="icon" type="image/png" href="icon.png">
+    <meta name="apple-mobile-web-app-title" content="ConaApp">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -38,6 +35,7 @@
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             padding-top: var(--safe-top);
+            scroll-behavior: smooth; /* Suaviza el regreso al inicio */
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -56,7 +54,6 @@
             font-size: 11px;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: -0.025em;
         }
 
         .category-btn.active {
@@ -69,7 +66,7 @@
         .flip-container {
             perspective: 1000px;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
         }
 
         .flip-inner {
@@ -105,6 +102,8 @@
             height: 100%;
             top: 0;
             left: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .img-blend {
@@ -122,9 +121,38 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* MODO CATÁLOGO: Ocultar Carrito */
-        .cart-feature {
-            display: none !important;
+        /* Estilo Tabla Nutricional */
+        .nutri-table {
+            width: 100%;
+            font-size: 10px;
+            border-collapse: collapse;
+        }
+        .nutri-table th {
+            text-align: left;
+            padding: 4px;
+            border-bottom: 2px solid black;
+            text-transform: uppercase;
+        }
+        .nutri-table td {
+            padding: 4px;
+            border-bottom: 1px solid #eee;
+        }
+        .nutri-table .bold { font-weight: 900; }
+
+        /* Tabs UI */
+        .tab-btn {
+            flex: 1;
+            padding: 10px 0;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #94a3b8;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
         }
     </style>
 </head>
@@ -137,40 +165,30 @@
                 <div class="flex justify-between items-center mb-4">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center overflow-hidden">
-                            <img src="icon.png" onerror="this.src='https://www.conaprole.uy/themes/web/img/conaprole_logo.png'" class="w-8 h-8 object-contain">
+                            <img src="https://www.conaprole.uy/themes/web/img/conaprole_logo.png" class="w-8 h-8 object-contain">
                         </div>
                         <h1 class="text-lg font-black text-slate-800 tracking-tighter uppercase">Catálogo<span class="text-blue-600">2026</span></h1>
                     </div>
-                    <!-- Carrito Oculto -->
-                    <button id="cartBtn" class="cart-feature relative p-2.5 bg-slate-100 rounded-2xl text-slate-600 active:scale-90 transition-transform">
-                        <i class="fa-solid fa-clipboard-list text-xl"></i>
-                        <span id="cartCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black min-w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-white hidden">0</span>
-                    </button>
                 </div>
                 
                 <div class="relative mb-3">
                     <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="searchInput" placeholder="Buscar producto o SKU..." class="w-full bg-slate-100/50 border-2 border-transparent focus:border-blue-500/20 focus:bg-white rounded-2xl py-3 pl-11 pr-4 text-sm outline-none transition-all shadow-sm">
+                    <input type="text" id="searchInput" placeholder="Buscar nombre, SKU, ingredientes..." class="w-full bg-slate-100/50 border-2 border-transparent focus:border-blue-500/20 focus:bg-white rounded-2xl py-3 pl-11 pr-4 text-sm outline-none transition-all shadow-sm">
                 </div>
             </div>
 
             <div class="overflow-x-auto no-scrollbar px-4 pb-3">
                 <div id="categoryList" class="category-grid"></div>
             </div>
-            
-            <div id="subCategoryList" class="hidden flex overflow-x-auto px-4 py-3 space-x-2 no-scrollbar border-t border-slate-50"></div>
         </header>
 
-        <!-- MAIN -->
+        <!-- MAIN GRID -->
         <main class="p-4 max-w-7xl mx-auto pb-32">
             <div id="loadingOverlay" class="flex flex-col items-center justify-center py-32 text-center">
                 <div class="loader mb-4"></div>
-                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest animate-pulse">Sincronizando Catálogo...</p>
-                <p id="errorMsg" class="text-red-500 text-[10px] mt-4 hidden">Error al cargar datos. Verifica la conexión.</p>
+                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest animate-pulse">Cargando Fichas Técnicas...</p>
             </div>
-
             <div id="productGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
-            
             <div id="emptyState" class="hidden flex flex-col items-center justify-center py-32 text-slate-300">
                 <i class="fa-solid fa-box-open text-5xl mb-4 opacity-20"></i>
                 <p class="font-bold text-sm uppercase tracking-tighter">No hay resultados</p>
@@ -178,20 +196,20 @@
         </main>
     </div>
 
-    <!-- PRODUCT DETAIL MODAL WITH FLIP -->
+    <!-- PRODUCT MODAL -->
     <div id="productModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[70] hidden flex items-center justify-center p-4">
         <div id="flipContainer" class="flip-container">
             <div class="flip-inner">
                 
-                <!-- FRONT SIDE (Current Info) -->
+                <!-- FRONT: INFO COMERCIAL -->
                 <div class="flip-front">
                     <button onclick="closeProductModal()" class="absolute top-5 right-5 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-800 shadow-sm z-10 active:scale-90 transition-transform">
                         <i class="fa-solid fa-xmark text-lg"></i>
                     </button>
                     
-                    <button id="flipTriggerBtn" onclick="flipCard()" class="absolute top-5 left-5 px-3 py-1.5 bg-blue-600/10 backdrop-blur rounded-full flex items-center gap-2 text-blue-600 z-10 active:scale-90 transition-transform hidden">
-                        <i class="fa-solid fa-rotate text-xs"></i>
-                        <span class="text-[9px] font-black uppercase tracking-widest">Planograma</span>
+                    <button onclick="flipCard()" class="absolute top-5 left-5 px-3 py-1.5 bg-blue-600/10 backdrop-blur rounded-full flex items-center gap-2 text-blue-600 z-10 active:scale-90 transition-transform">
+                        <i class="fa-solid fa-circle-info text-xs"></i>
+                        <span class="text-[9px] font-black uppercase tracking-widest">Ficha Técnica</span>
                     </button>
                     
                     <div class="bg-slate-50 p-6 flex items-center justify-center aspect-square overflow-hidden">
@@ -205,22 +223,22 @@
                             <p id="modalPres" class="text-slate-400 font-medium text-xs">Presentación</p>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3 mb-6">
-                            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                                <p class="text-[9px] text-slate-400 uppercase font-black mb-0.5">EAN</p>
-                                <p id="modalEan" class="text-xs font-bold text-slate-700">-</p>
+                        <div class="grid grid-cols-2 gap-2 mb-6">
+                            <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 text-center">
+                                <p class="text-[8px] text-slate-400 uppercase font-black mb-0.5">EAN</p>
+                                <p id="modalEan" class="text-[10px] font-bold text-slate-700">-</p>
                             </div>
-                            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                                <p class="text-[9px] text-slate-400 uppercase font-black mb-0.5">Unidades/Caja</p>
-                                <p id="modalCaja" class="text-xs font-bold text-slate-700">-</p>
+                            <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 text-center">
+                                <p class="text-[8px] text-slate-400 uppercase font-black mb-0.5">U/Caja</p>
+                                <p id="modalCaja" class="text-[10px] font-bold text-slate-700">-</p>
                             </div>
-                            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                                <p class="text-[9px] text-slate-400 uppercase font-black mb-0.5">Vida Útil</p>
-                                <p id="modalVida" class="text-xs font-bold text-slate-700">-</p>
+                            <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 text-center">
+                                <p class="text-[8px] text-slate-400 uppercase font-black mb-0.5">Vida Útil</p>
+                                <p id="modalVidaFront" class="text-[10px] font-bold text-slate-700">-</p>
                             </div>
-                            <div class="bg-blue-50 p-3 rounded-2xl border border-blue-100">
-                                <p class="text-[9px] text-blue-400 uppercase font-black mb-0.5">Precio s/IVA</p>
-                                <p id="modalPrecio" class="text-base font-black text-blue-600">-</p>
+                            <div class="bg-blue-50 p-2.5 rounded-2xl border border-blue-100 text-center">
+                                <p class="text-[8px] text-blue-400 uppercase font-black mb-0.5">Precio s/IVA</p>
+                                <p id="modalPrecio" class="text-xs font-black text-blue-600">-</p>
                             </div>
                         </div>
 
@@ -229,130 +247,122 @@
                                 <span class="text-[9px] font-black text-slate-400 uppercase">SKU</span>
                                 <span id="modalSku" class="text-xs font-mono font-bold text-slate-800 tracking-wider">0000</span>
                             </div>
-                            <button id="modalAddBtn" class="cart-feature bg-blue-600 text-white px-6 py-3 rounded-xl font-black shadow-lg shadow-blue-100 active:scale-95 transition-transform uppercase text-xs">
-                                Añadir
-                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- BACK SIDE (Planogram & Conservation) -->
+                <!-- BACK: INFO TÉCNICA (TABS) -->
                 <div class="flip-back">
-                    <div class="p-6 h-full flex flex-col">
-                        <div class="flex justify-between items-center mb-6">
-                            <button onclick="flipCard()" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-800 active:scale-90 transition-transform">
-                                <i class="fa-solid fa-arrow-left"></i>
-                            </button>
-                            <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest">Información Logística</h3>
-                            <div class="w-10"></div>
+                    <div class="flex border-b border-slate-100">
+                        <button onclick="switchTab('nutri')" id="tabNutri" class="tab-btn active">Nutricional</button>
+                        <button onclick="switchTab('logo')" id="tabLogo" class="tab-btn">Logística</button>
+                        <button onclick="flipCard()" class="px-5 text-slate-300"><i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
+
+                    <div id="contentNutri" class="flex-1 overflow-y-auto p-6 bg-white">
+                        <h3 class="text-[10px] font-black uppercase mb-3 text-slate-800 border-l-4 border-blue-600 pl-3">Información Nutricional</h3>
+                        
+                        <div class="mb-4 p-3 bg-slate-900 rounded-xl text-white flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-scale-balanced text-blue-400 text-xs"></i>
+                                <span class="text-[10px] font-black uppercase tracking-widest">Porción:</span>
+                            </div>
+                            <span id="modalPorcion" class="text-xs font-bold text-blue-300 uppercase">Ver tabla</span>
                         </div>
                         
-                        <div class="flex-1 bg-white rounded-3xl border-2 border-slate-100 flex flex-col items-center justify-center p-2 text-center relative overflow-hidden shadow-inner">
-                            <img id="planogramImg" src="" class="w-full h-full object-contain bg-white">
+                        <table class="nutri-table mb-6">
+                            <thead>
+                                <tr>
+                                    <th>Componente</th>
+                                    <th>Cantidad</th>
+                                    <th>%VD*</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nutriRows"></tbody>
+                        </table>
+                        
+                        <div class="mt-4">
+                            <h4 class="text-[9px] font-black text-slate-400 uppercase mb-2">Ingredientes</h4>
+                            <p id="modalIngredientes" class="text-[11px] text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl italic">
+                                Información no disponible.
+                            </p>
                         </div>
+                    </div>
 
-                        <!-- NEW CONSERVATION DATA -->
-                        <div class="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
-                            <div class="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600">
-                                <i class="fa-solid fa-temperature-half text-lg"></i>
-                            </div>
-                            <div class="text-left">
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Conservación</p>
-                                <p id="modalConservation" class="text-xs font-bold text-slate-700 uppercase">Ambiente / Refrigerado</p>
-                            </div>
+                    <div id="contentLogo" class="hidden flex-1 flex flex-col p-6 bg-white overflow-y-auto">
+                        <div class="flex-1 bg-slate-50 rounded-3xl border-2 border-slate-100 flex items-center justify-center p-2 mb-4 relative min-h-[250px]">
+                            <img id="planogramImg" src="" class="max-h-full object-contain img-blend">
                         </div>
-
-                        <div class="mt-4 p-4 bg-blue-50 rounded-2xl">
-                            <p class="text-[9px] font-black text-blue-600 uppercase mb-1 tracking-widest">Sugerencia de Exhibición</p>
-                            <p class="text-[10px] text-blue-800 font-medium">Mantener el bloque de marca y asegurar el sistema FIFO (Primero en entrar, primero en salir).</p>
+                        <div class="space-y-3">
+                            <div class="bg-blue-50 p-4 rounded-2xl flex items-center gap-4 border border-blue-100">
+                                <div class="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600">
+                                    <i class="fa-solid fa-temperature-half text-lg"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black text-blue-400 uppercase tracking-widest">Conservación</p>
+                                    <p id="modalConservation" class="text-xs font-bold text-slate-700 uppercase tracking-tighter">-</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-            </div>
-        </div>
-    </div>
-
-    <!-- CART MODAL (Oculto por lógica) -->
-    <div id="cartModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] hidden flex items-end justify-center p-4">
-        <div class="bg-white w-full max-w-lg rounded-[2.5rem] max-h-[80vh] flex flex-col shadow-2xl overflow-hidden mb-4">
-            <div class="p-5 flex justify-between items-center border-b border-slate-50">
-                <h2 class="text-lg font-black text-slate-800">Resumen del Pedido</h2>
-                <button onclick="toggleCart()" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">&times;</button>
-            </div>
-            <div id="cartItems" class="flex-1 overflow-y-auto p-5 space-y-3"></div>
-            <div class="p-5 bg-slate-50 border-t border-slate-100 pb-[calc(1.5rem+var(--safe-bottom))]">
-                <button onclick="sendWhatsApp()" class="w-full bg-[#25D366] text-white py-4 rounded-2xl font-black text-base flex items-center justify-center gap-3 shadow-lg shadow-green-100 active:scale-95 transition-transform">
-                    <i class="fa-brands fa-whatsapp text-xl"></i> Enviar por WhatsApp
-                </button>
             </div>
         </div>
     </div>
 
     <script>
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQLCwQUk_7Q0SEIjjmIPNpKNnSKhZvJSBbro7hnwRSAge-g4u9EPllNb4mAL5n-7Wz3V-ezc7mnpddP/pub?output=csv';
-
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQLCwQUk_7Q0SEIjjmIPNpKNnSKhZvJSBbro7hnwRSAge-g4u9EPllNb4mAL5n-7Wz3V-ezc7mnpddP/pub?output=tsv';
         const COLORS = ['#2563eb', '#db2777', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#dc2626', '#4f46e5', '#16a34a', '#9333ea'];
         
         let products = [];
-        let cart = [];
         let currentCat = 'TODOS';
-        let currentSubCat = 'TODAS';
         let categoryColorMap = {'TODOS': '#1e293b'};
-        
-        let touchStartX = 0;
-        let touchEndX = 0;
 
         async function init() {
             try {
                 const response = await fetch(`${CSV_URL}&t=${Date.now()}`);
-                if (!response.ok) throw new Error('Network response was not ok');
                 const data = await response.text();
-                
-                if (!data || data.trim().length === 0) throw new Error('CSV empty');
-                
-                parseCSV(data);
-                
+                parseData(data);
                 document.getElementById('loadingOverlay').classList.add('hidden');
                 generateColorMap();
                 renderCategories();
                 applyFilters();
-                setupSwipeHandlers();
-            } catch (e) { 
-                console.error("Error inicializando app:", e); 
-                document.getElementById('errorMsg').classList.remove('hidden');
-            }
+            } catch (e) { console.error(e); }
         }
 
-        function parseCSV(csv) {
-            const lines = csv.split(/\r?\n/).filter(line => line.trim() !== "");
-            
+        function parseData(content) {
+            const lines = content.split(/\r?\n/).filter(line => line.trim() !== "");
             products = lines.slice(1).map(line => {
-                const row = [];
-                let cell = "";
-                let inQuotes = false;
-                for (let i = 0; i < line.length; i++) {
-                    let char = line[i];
-                    if (char === '"' && line[i+1] === '"') { cell += '"'; i++; }
-                    else if (char === '"') { inQuotes = !inQuotes; }
-                    else if (char === ',' && !inQuotes) { row.push(cell.trim()); cell = ""; }
-                    else { cell += char; }
-                }
-                row.push(cell.trim());
-
+                const row = line.split('\t');
                 return {
-                    marca: (row[0] || 'S/D').trim(), 
-                    subcat: (row[1] || '').trim(), 
+                    marca: (row[0] || 'S/D').trim(),
+                    subcat: (row[1] || '').trim(),
                     nombre: (row[2] || 'Sin Nombre').trim(),
-                    presentacion: (row[3] || '').trim(), 
-                    sku: (row[4] || '0').trim(), 
+                    presentacion: (row[3] || '').trim(),
+                    sku: (row[4] || '0').trim(),
                     img: (row[5] || '').trim(),
-                    ean: (row[6] || '-').trim(), 
-                    caja: (row[7] || '-').trim(), 
-                    vida: (row[8] || '-').trim(), 
+                    ean: (row[6] || '-').trim(),
+                    caja: (row[7] || '-').trim(),
+                    vida: (row[8] || '-').trim(),
                     precio: (row[9] || '0').trim(),
                     planograma: (row[10] || '').trim(),
-                    conservacion: (row[11] || 'S/D').trim() // Nueva columna
+                    conservacion: (row[11] || 'S/D').trim(),
+                    ingredientes: (row[12] || '').trim(),
+                    valorEnergetico: (row[13] || '-').trim(),
+                    proteinas: (row[14] || '-').trim(),
+                    grasasTotales: (row[15] || '-').trim(),
+                    grasasSaturadas: (row[16] || '-').trim(),
+                    carbohidratos: (row[17] || '-').trim(),
+                    azucares: (row[18] || '-').trim(),
+                    sodio: (row[19] || '-').trim(),
+                    porcion: (row[20] || '1 unidad').trim(),
+                    vitaminaA: (row[21] || '-').trim(),
+                    vitaminaD: (row[22] || '-').trim(),
+                    vitaminaE: (row[23] || '-').trim(),
+                    calcio: (row[24] || '-').trim(),
+                    hierro: (row[25] || '-').trim(),
+                    grasasTrans: (row[26] || '-').trim()
                 };
             }).filter(p => p.sku !== '0');
         }
@@ -365,7 +375,6 @@
         function renderCategories() {
             const cats = ['TODOS', ...Object.keys(categoryColorMap).filter(k => k !== 'TODOS').sort()];
             const list = document.getElementById('categoryList');
-            if (!list) return;
             list.innerHTML = cats.map(c => {
                 const active = c === currentCat;
                 const color = categoryColorMap[c];
@@ -373,70 +382,50 @@
             }).join('');
         }
 
+        // FUNCIÓN CORREGIDA: Ahora resetea el scroll del contenedor principal
         function selectCategory(cat) {
             currentCat = cat.toUpperCase();
-            currentSubCat = 'TODAS';
             renderCategories();
-            renderSubCategories();
             applyFilters();
-        }
-
-        function renderSubCategories() {
-            const container = document.getElementById('subCategoryList');
-            if (currentCat === 'TODOS') return container.classList.add('hidden');
-            const subSet = new Set();
-            products.forEach(p => { if (p.marca.toUpperCase() === currentCat && p.subcat) subSet.add(p.subcat.toUpperCase()); });
-            const subs = ['TODAS', ...Array.from(subSet).sort()];
-            if (subs.length <= 1) return container.classList.add('hidden');
-            const color = categoryColorMap[currentCat];
-            container.classList.remove('hidden');
-            container.innerHTML = subs.map(s => {
-                const active = s === currentSubCat;
-                return `<button onclick="selectSubCategory('${s}')" style="${active ? `color:${color}; border-color:${color}40; background-color:${color}10;` : `color:#94a3b8;`}" class="border border-transparent px-4 py-1.5 rounded-lg text-[10px] font-black uppercase whitespace-nowrap transition-all">${s}</button>`;
-            }).join('');
-        }
-
-        function selectSubCategory(sub) {
-            currentSubCat = sub.toUpperCase();
-            renderSubCategories();
-            applyFilters();
+            
+            // Forzar el scroll al inicio del contenedor
+            const container = document.getElementById('appScrollContainer');
+            if (container) {
+                container.scrollTo({ top: 0, behavior: 'auto' }); // 'auto' para que sea instantáneo al cambiar categoría
+            }
         }
 
         function applyFilters() {
             const term = document.getElementById('searchInput').value.toLowerCase();
             const filtered = products.filter(p => {
-                const mCat = currentCat === 'TODOS' || p.marca.toUpperCase() === currentCat;
-                const mSub = currentSubCat === 'TODAS' || (p.subcat || "").toUpperCase() === currentSubCat;
-                const mSearch = p.nombre.toLowerCase().includes(term) || p.sku.toLowerCase().includes(term);
-                return mCat && mSub && mSearch;
+                const matchCat = currentCat === 'TODOS' || p.marca.toUpperCase() === currentCat;
+                const matchSearch = p.nombre.toLowerCase().includes(term) || 
+                                    p.sku.toLowerCase().includes(term);
+                return matchCat && matchSearch;
             });
             renderProducts(filtered);
+            
+            // También reseteamos el scroll al buscar por texto
+            const container = document.getElementById('appScrollContainer');
+            if (container && term.length > 0) {
+                container.scrollTop = 0;
+            }
         }
 
         function renderProducts(items) {
             const grid = document.getElementById('productGrid');
-            if (!grid) return;
-            grid.innerHTML = items.map(p => {
-                const color = categoryColorMap[p.marca.toUpperCase()] || '#1e293b';
-                const mainImg = p.img || 'https://via.placeholder.com/400x400?text=Sin+Imagen';
-                return `
-                    <div onclick="openProductModal('${p.sku}')" class="bg-white rounded-[1.8rem] p-2.5 shadow-sm border border-slate-100 flex flex-col h-full product-card">
-                        <div class="relative aspect-square bg-slate-50 rounded-[1.4rem] mb-2.5 overflow-hidden flex items-center justify-center">
-                            <img src="${mainImg}" class="w-full h-full img-blend p-3" loading="lazy" onerror="this.src='https://via.placeholder.com/400x400?text=Sin+Imagen'">
-                        </div>
-                        <div class="px-1 flex flex-col flex-1">
-                            <h3 class="text-[11px] font-bold text-slate-800 leading-tight line-clamp-2 mb-0.5 uppercase tracking-tighter">${p.nombre}</h3>
-                            <p class="text-[9px] text-slate-400 font-medium mb-2">${p.presentacion}</p>
-                            <div class="flex items-center justify-between mt-auto">
-                                <span class="text-[12px] font-black text-blue-600 tracking-tighter">$${p.precio}</span>
-                                <button onclick="event.stopPropagation(); addToCart('${p.sku}')" style="background-color:${color}" class="cart-feature text-white w-8 h-8 rounded-lg flex items-center justify-center shadow-md active:scale-90 transition-transform">
-                                    <i class="fa-solid fa-plus text-xs"></i>
-                                </button>
-                            </div>
-                        </div>
+            grid.innerHTML = items.map(p => `
+                <div onclick="openProductModal('${p.sku}')" class="bg-white rounded-[1.8rem] p-2.5 shadow-sm border border-slate-100 flex flex-col h-full active:scale-95 transition-transform">
+                    <div class="relative aspect-square bg-slate-50 rounded-[1.4rem] mb-2.5 overflow-hidden flex items-center justify-center">
+                        <img src="${p.img || 'https://via.placeholder.com/200'}" class="w-full h-full img-blend p-3">
                     </div>
-                `;
-            }).join('');
+                    <div class="px-1 flex flex-col flex-1">
+                        <h3 class="text-[11px] font-bold text-slate-800 leading-tight line-clamp-2 mb-0.5 uppercase tracking-tighter">${p.nombre}</h3>
+                        <p class="text-[9px] text-slate-400 font-medium mb-2">${p.presentacion}</p>
+                        <span class="text-[12px] font-black text-blue-600 tracking-tighter mt-auto">$${p.precio}</span>
+                    </div>
+                </div>
+            `).join('');
             document.getElementById('emptyState').classList.toggle('hidden', items.length > 0);
         }
 
@@ -445,119 +434,67 @@
             if (!p) return;
             
             document.getElementById('flipContainer').classList.remove('is-flipped');
-            document.getElementById('modalImg').src = p.img || 'https://via.placeholder.com/400x400?text=Sin+Imagen';
+            document.getElementById('modalImg').src = p.img || 'https://via.placeholder.com/400';
             document.getElementById('modalTitle').innerText = p.nombre;
-            document.getElementById('modalCategory').innerText = p.subcat || p.marca;
+            document.getElementById('modalCategory').innerText = p.marca + ' / ' + p.subcat;
             document.getElementById('modalPres').innerText = p.presentacion;
             document.getElementById('modalEan').innerText = p.ean;
             document.getElementById('modalCaja').innerText = p.caja + ' U.';
-            document.getElementById('modalVida').innerText = p.vida;
+            document.getElementById('modalVidaFront').innerText = p.vida;
             document.getElementById('modalPrecio').innerText = '$' + p.precio;
             document.getElementById('modalSku').innerText = p.sku;
-            document.getElementById('modalConservation').innerText = p.conservacion;
-            
-            const color = categoryColorMap[p.marca.toUpperCase()] || '#1e293b';
-            document.getElementById('modalAddBtn').style.backgroundColor = color;
-            document.getElementById('modalAddBtn').onclick = () => { addToCart(p.sku); closeProductModal(); };
-            
-            const triggerBtn = document.getElementById('flipTriggerBtn');
-            const planImg = document.getElementById('planogramImg');
 
-            if (p.planograma && p.planograma.length > 5) {
-                triggerBtn.classList.remove('hidden');
-                planImg.src = p.planograma;
-            } else {
-                triggerBtn.classList.add('hidden');
-                planImg.src = '';
-            }
+            document.getElementById('modalPorcion').innerText = p.porcion;
+            document.getElementById('modalIngredientes').innerText = p.ingredientes || "Ingredientes no detallados.";
             
+            const fullNutrients = [
+                { label: 'Valor Energético', val: p.valorEnergetico },
+                { label: 'Proteínas', val: p.proteinas },
+                { label: 'Carbohidratos', val: p.carbohidratos },
+                { label: 'Azúcares totales', val: p.azucares },
+                { label: 'Grasas Totales', val: p.grasasTotales },
+                { label: 'Grasas Saturadas', val: p.grasasSaturadas },
+                { label: 'Grasas Trans', val: p.grasasTrans },
+                { label: 'Sodio', val: p.sodio },
+                { label: 'Vitamina A', val: p.vitaminaA },
+                { label: 'Vitamina D', val: p.vitaminaD },
+                { label: 'Vitamina E', val: p.vitaminaE },
+                { label: 'Calcio', val: p.calcio },
+                { label: 'Hierro', val: p.hierro }
+            ];
+
+            const rowsToDisplay = fullNutrients.filter(n => n.val && n.val !== '-' && n.val !== '');
+
+            document.getElementById('nutriRows').innerHTML = rowsToDisplay.length > 0 
+                ? rowsToDisplay.map(r => `
+                    <tr>
+                        <td class="bold">${r.label}</td>
+                        <td>${r.val}</td>
+                        <td>-</td>
+                    </tr>
+                `).join('')
+                : '<tr><td colspan="3" class="text-center py-4 text-slate-400 italic">Información no disponible</td></tr>';
+
+            document.getElementById('planogramImg').src = p.planograma || 'https://via.placeholder.com/400?text=Sin+Imagen';
+            document.getElementById('modalConservation').innerText = p.conservacion;
+
+            switchTab('nutri');
             document.getElementById('productModal').classList.remove('hidden');
         }
 
+        function switchTab(tab) {
+            const isNutri = tab === 'nutri';
+            document.getElementById('tabNutri').classList.toggle('active', isNutri);
+            document.getElementById('tabLogo').classList.toggle('active', !isNutri);
+            document.getElementById('contentNutri').classList.toggle('hidden', !isNutri);
+            document.getElementById('contentLogo').classList.toggle('hidden', isNutri);
+        }
+
+        function flipCard() { document.getElementById('flipContainer').classList.toggle('is-flipped'); }
         function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
-
-        function flipCard() {
-            document.getElementById('flipContainer').classList.toggle('is-flipped');
-        }
-
-        function setupSwipeHandlers() {
-            const container = document.getElementById('flipContainer');
-            container.addEventListener('touchstart', e => {
-                touchStartX = e.changedTouches[0].screenX;
-            }, {passive: true});
-
-            container.addEventListener('touchend', e => {
-                touchEndX = e.changedTouches[0].screenX;
-                handleGesture();
-            }, {passive: true});
-        }
-
-        function handleGesture() {
-            const delta = touchEndX - touchStartX;
-            const threshold = 50;
-            const triggerBtn = document.getElementById('flipTriggerBtn');
-            if (triggerBtn.classList.contains('hidden')) return;
-
-            const container = document.getElementById('flipContainer');
-            const isFlipped = container.classList.contains('is-flipped');
-
-            if (delta < -threshold && !isFlipped) { flipCard(); } 
-            else if (delta > threshold && isFlipped) { flipCard(); }
-        }
-
-        function addToCart(id) {
-            const p = products.find(x => x.sku === id);
-            if (!p) return;
-            const ex = cart.find(x => x.sku === id);
-            if(ex) ex.qty++; else cart.push({...p, qty: 1});
-            updateCart();
-        }
-
-        function updateCart() {
-            const count = cart.reduce((a, b) => a + b.qty, 0);
-            const badge = document.getElementById('cartCount');
-            badge.innerText = count;
-            badge.classList.toggle('hidden', count === 0);
-            document.getElementById('cartItems').innerHTML = cart.length === 0 ? 
-                '<p class="text-center py-8 text-slate-400 font-bold text-xs uppercase">Carrito vacío</p>' :
-                cart.map(i => `
-                    <div class="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                        <div class="flex items-center gap-3">
-                            <img src="${i.img || 'https://via.placeholder.com/400x400?text=Error'}" class="w-10 h-10 bg-white rounded-lg object-contain p-1 shadow-sm" onerror="this.src='https://via.placeholder.com/400x400?text=Error'">
-                            <div>
-                                <p class="text-[10px] font-bold text-slate-800 line-clamp-1 uppercase">${i.nombre}</p>
-                                <p class="text-[9px] text-slate-400 font-mono">$${i.precio} | SKU:${i.sku}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="changeQty('${i.sku}', -1)" class="w-7 h-7 flex items-center justify-center bg-white rounded-lg border border-slate-100 shadow-sm">-</button>
-                            <span class="text-xs font-black w-4 text-center">${i.qty}</span>
-                            <button onclick="changeQty('${i.sku}', 1)" class="w-7 h-7 flex items-center justify-center bg-white rounded-lg border border-slate-100 shadow-sm">+</button>
-                        </div>
-                    </div>
-                `).join('');
-        }
-
-        function changeQty(id, d) {
-            const idx = cart.findIndex(x => x.sku === id);
-            if (idx === -1) return;
-            cart[idx].qty += d;
-            if(cart[idx].qty <= 0) cart.splice(idx, 1);
-            updateCart();
-        }
-
-        function toggleCart() { document.getElementById('cartModal').classList.toggle('hidden'); }
-        
-        function sendWhatsApp() {
-            if(cart.length === 0) return;
-            let m = "🛒 *CONAAPP - NUEVO PEDIDO*\n\n";
-            cart.forEach(i => m += `✅ *${i.nombre.toUpperCase()}*\n   Cant: ${i.qty} | SKU: ${i.sku}\n   Precio s/IVA: $${i.precio}\n\n`);
-            window.open(`https://wa.me/?text=${encodeURIComponent(m)}`, '_blank');
-        }
 
         window.onclick = (e) => { if (e.target.id == 'productModal') closeProductModal(); }
         document.getElementById('searchInput').addEventListener('input', applyFilters);
-        document.getElementById('cartBtn').addEventListener('click', toggleCart);
         
         init();
     </script>
