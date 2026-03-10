@@ -35,7 +35,7 @@
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             padding-top: var(--safe-top);
-            scroll-behavior: smooth; /* Suaviza el regreso al inicio */
+            scroll-behavior: smooth;
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -121,37 +121,40 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Estilo Tabla Nutricional */
         .nutri-table {
             width: 100%;
-            font-size: 10px;
+            font-size: 11px;
             border-collapse: collapse;
         }
         .nutri-table th {
             text-align: left;
-            padding: 4px;
-            border-bottom: 2px solid black;
+            padding: 8px 4px;
+            border-bottom: 2px solid #e2e8f0;
             text-transform: uppercase;
+            font-weight: 900;
+            color: #64748b;
         }
         .nutri-table td {
-            padding: 4px;
-            border-bottom: 1px solid #eee;
+            padding: 8px 4px;
+            border-bottom: 1px solid #f1f5f9;
         }
-        .nutri-table .bold { font-weight: 900; }
+        .nutri-table .bold { font-weight: 800; color: #1e293b; }
 
-        /* Tabs UI */
+        /* Tabs UI Mejorada */
         .tab-btn {
             flex: 1;
-            padding: 10px 0;
+            padding: 14px 0;
             font-size: 10px;
             font-weight: 900;
             text-transform: uppercase;
             color: #94a3b8;
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.05em;
         }
         .tab-btn.active {
             color: #2563eb;
+            background-color: #eff6ff;
             border-bottom-color: #2563eb;
         }
     </style>
@@ -165,7 +168,7 @@
                 <div class="flex justify-between items-center mb-4">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center overflow-hidden">
-                            <img src="https://www.conaprole.uy/themes/web/img/conaprole_logo.png" class="w-8 h-8 object-contain">
+                            <img src="https://www.conaprole.uy/themes/web/img/conaprole_logo.png" class="w-8 h-8 object-contain" alt="Logo Conaprole">
                         </div>
                         <h1 class="text-lg font-black text-slate-800 tracking-tighter uppercase">Catálogo<span class="text-blue-600">2026</span></h1>
                     </div>
@@ -199,7 +202,7 @@
     <!-- PRODUCT MODAL -->
     <div id="productModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[70] hidden flex items-center justify-center p-4">
         <div id="flipContainer" class="flip-container">
-            <div class="flip-inner">
+            <div id="flipInner" class="flip-inner">
                 
                 <!-- FRONT: INFO COMERCIAL -->
                 <div class="flip-front">
@@ -213,13 +216,13 @@
                     </button>
                     
                     <div class="bg-slate-50 p-6 flex items-center justify-center aspect-square overflow-hidden">
-                        <img id="modalImg" src="" class="max-h-full object-contain img-blend">
+                        <img id="modalImg" src="" class="max-h-full object-contain img-blend" alt="Imagen del producto">
                     </div>
                     
                     <div class="p-6">
                         <div class="mb-5">
                             <span id="modalCategory" class="text-[9px] font-black uppercase tracking-widest text-blue-600 mb-1 block">CATEGORÍA</span>
-                            <h2 id="modalTitle" class="text-xl font-black text-slate-800 leading-tight mb-1 uppercase tracking-tighter">Nombre</h2>
+                            <h2 id="modalTitle" class="text-xl font-black text-slate-800 leading-tight mb-1 uppercase tracking-tighter line-clamp-2">Nombre</h2>
                             <p id="modalPres" class="text-slate-400 font-medium text-xs">Presentación</p>
                         </div>
 
@@ -251,58 +254,68 @@
                     </div>
                 </div>
 
-                <!-- BACK: INFO TÉCNICA (TABS) -->
-                <div class="flip-back">
+                <!-- BACK: INFO TÉCNICA (TABS & SWIPE) -->
+                <div class="flip-back" id="backSide">
                     <div class="flex border-b border-slate-100">
                         <button onclick="switchTab('nutri')" id="tabNutri" class="tab-btn active">Nutricional</button>
                         <button onclick="switchTab('logo')" id="tabLogo" class="tab-btn">Logística</button>
-                        <button onclick="flipCard()" class="px-5 text-slate-300"><i class="fa-solid fa-rotate-right"></i></button>
+                        <button onclick="flipCard()" class="px-5 text-slate-400 active:scale-95 transition-transform"><i class="fa-solid fa-rotate-right"></i></button>
                     </div>
 
                     <div id="contentNutri" class="flex-1 overflow-y-auto p-6 bg-white">
-                        <h3 class="text-[10px] font-black uppercase mb-3 text-slate-800 border-l-4 border-blue-600 pl-3">Información Nutricional</h3>
-                        
-                        <div class="mb-4 p-3 bg-slate-900 rounded-xl text-white flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <i class="fa-solid fa-scale-balanced text-blue-400 text-xs"></i>
-                                <span class="text-[10px] font-black uppercase tracking-widest">Porción:</span>
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                            <h3 class="text-[10px] font-black uppercase text-slate-800 tracking-widest">Tabla Nutricional</h3>
+                            <div class="text-[9px] font-bold text-blue-600 px-2 py-1 bg-blue-50 rounded-lg">
+                                PORCIÓN: <span id="modalPorcion">-</span>
                             </div>
-                            <span id="modalPorcion" class="text-xs font-bold text-blue-300 uppercase">Ver tabla</span>
                         </div>
                         
                         <table class="nutri-table mb-6">
                             <thead>
                                 <tr>
                                     <th>Componente</th>
-                                    <th>Cantidad</th>
+                                    <th>Cant.</th>
                                     <th>%VD*</th>
                                 </tr>
                             </thead>
                             <tbody id="nutriRows"></tbody>
                         </table>
                         
-                        <div class="mt-4">
-                            <h4 class="text-[9px] font-black text-slate-400 uppercase mb-2">Ingredientes</h4>
-                            <p id="modalIngredientes" class="text-[11px] text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl italic">
+                        <div class="mt-4 p-4 bg-slate-50 rounded-2xl">
+                            <h4 class="text-[9px] font-black text-slate-400 uppercase mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-leaf text-[8px] text-green-500"></i> Ingredientes
+                            </h4>
+                            <p id="modalIngredientes" class="text-[11px] text-slate-600 leading-relaxed italic">
                                 Información no disponible.
                             </p>
+                        </div>
+                        
+                        <div class="mt-6 text-center text-[8px] text-slate-300 font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-chevron-left animate-pulse"></i> DESLIZA PARA LOGÍSTICA <i class="fa-solid fa-chevron-right animate-pulse"></i>
                         </div>
                     </div>
 
                     <div id="contentLogo" class="hidden flex-1 flex flex-col p-6 bg-white overflow-y-auto">
-                        <div class="flex-1 bg-slate-50 rounded-3xl border-2 border-slate-100 flex items-center justify-center p-2 mb-4 relative min-h-[250px]">
-                            <img id="planogramImg" src="" class="max-h-full object-contain img-blend">
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                            <h3 class="text-[10px] font-black uppercase text-slate-800 tracking-widest">Datos de Logística</h3>
                         </div>
-                        <div class="space-y-3">
-                            <div class="bg-blue-50 p-4 rounded-2xl flex items-center gap-4 border border-blue-100">
-                                <div class="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600">
-                                    <i class="fa-solid fa-temperature-half text-lg"></i>
-                                </div>
-                                <div>
-                                    <p class="text-[9px] font-black text-blue-400 uppercase tracking-widest">Conservación</p>
-                                    <p id="modalConservation" class="text-xs font-bold text-slate-700 uppercase tracking-tighter">-</p>
-                                </div>
+
+                        <div class="flex-1 bg-slate-50 rounded-3xl border-2 border-slate-100 flex items-center justify-center p-2 mb-4 relative min-h-[250px]">
+                            <img id="planogramImg" src="" class="max-h-full object-contain img-blend" alt="Planograma de exhibición">
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-2xl flex items-center gap-4 border border-blue-100">
+                            <div class="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600">
+                                <i class="fa-solid fa-temperature-half text-lg"></i>
                             </div>
+                            <div>
+                                <p class="text-[9px] font-black text-blue-400 uppercase tracking-widest">Conservación</p>
+                                <p id="modalConservation" class="text-xs font-bold text-slate-700 uppercase tracking-tighter">-</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 text-center text-[8px] text-slate-300 font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-chevron-left animate-pulse"></i> DESLIZA PARA NUTRICIONAL <i class="fa-solid fa-chevron-right animate-pulse"></i>
                         </div>
                     </div>
                 </div>
@@ -318,6 +331,31 @@
         let products = [];
         let currentCat = 'TODOS';
         let categoryColorMap = {'TODOS': '#1e293b'};
+        let activeTab = 'nutri';
+
+        // SWIPE LOGIC
+        let touchstartX = 0;
+        let touchendX = 0;
+
+        const backSide = document.getElementById('backSide');
+        backSide.addEventListener('touchstart', e => {
+            touchstartX = e.changedTouches[0].screenX;
+        }, {passive: true});
+
+        backSide.addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, {passive: true});
+
+        function handleSwipe() {
+            const threshold = 60; 
+            if (touchendX < touchstartX - threshold) {
+                if (activeTab === 'nutri') switchTab('logo');
+            }
+            if (touchendX > touchstartX + threshold) {
+                if (activeTab === 'logo') switchTab('nutri');
+            }
+        }
 
         async function init() {
             try {
@@ -382,17 +420,12 @@
             }).join('');
         }
 
-        // FUNCIÓN CORREGIDA: Ahora resetea el scroll del contenedor principal
         function selectCategory(cat) {
             currentCat = cat.toUpperCase();
             renderCategories();
             applyFilters();
-            
-            // Forzar el scroll al inicio del contenedor
             const container = document.getElementById('appScrollContainer');
-            if (container) {
-                container.scrollTo({ top: 0, behavior: 'auto' }); // 'auto' para que sea instantáneo al cambiar categoría
-            }
+            if (container) container.scrollTo({ top: 0, behavior: 'auto' });
         }
 
         function applyFilters() {
@@ -404,12 +437,8 @@
                 return matchCat && matchSearch;
             });
             renderProducts(filtered);
-            
-            // También reseteamos el scroll al buscar por texto
             const container = document.getElementById('appScrollContainer');
-            if (container && term.length > 0) {
-                container.scrollTop = 0;
-            }
+            if (container && term.length > 0) container.scrollTop = 0;
         }
 
         function renderProducts(items) {
@@ -417,7 +446,7 @@
             grid.innerHTML = items.map(p => `
                 <div onclick="openProductModal('${p.sku}')" class="bg-white rounded-[1.8rem] p-2.5 shadow-sm border border-slate-100 flex flex-col h-full active:scale-95 transition-transform">
                     <div class="relative aspect-square bg-slate-50 rounded-[1.4rem] mb-2.5 overflow-hidden flex items-center justify-center">
-                        <img src="${p.img || 'https://via.placeholder.com/200'}" class="w-full h-full img-blend p-3">
+                        <img src="${p.img || 'https://via.placeholder.com/200'}" class="w-full h-full img-blend p-3" alt="${p.nombre}">
                     </div>
                     <div class="px-1 flex flex-col flex-1">
                         <h3 class="text-[11px] font-bold text-slate-800 leading-tight line-clamp-2 mb-0.5 uppercase tracking-tighter">${p.nombre}</h3>
@@ -443,7 +472,6 @@
             document.getElementById('modalVidaFront').innerText = p.vida;
             document.getElementById('modalPrecio').innerText = '$' + p.precio;
             document.getElementById('modalSku').innerText = p.sku;
-
             document.getElementById('modalPorcion').innerText = p.porcion;
             document.getElementById('modalIngredientes').innerText = p.ingredientes || "Ingredientes no detallados.";
             
@@ -470,12 +498,12 @@
                     <tr>
                         <td class="bold">${r.label}</td>
                         <td>${r.val}</td>
-                        <td>-</td>
+                        <td class="text-slate-400 font-medium">-</td>
                     </tr>
                 `).join('')
-                : '<tr><td colspan="3" class="text-center py-4 text-slate-400 italic">Información no disponible</td></tr>';
+                : '<tr><td colspan="3" class="text-center py-8 text-slate-400 italic">Información no disponible</td></tr>';
 
-            document.getElementById('planogramImg').src = p.planograma || 'https://via.placeholder.com/400?text=Sin+Imagen';
+            document.getElementById('planogramImg').src = p.planograma || 'https://via.placeholder.com/400?text=Planograma+no+disponible';
             document.getElementById('modalConservation').innerText = p.conservacion;
 
             switchTab('nutri');
@@ -483,6 +511,7 @@
         }
 
         function switchTab(tab) {
+            activeTab = tab;
             const isNutri = tab === 'nutri';
             document.getElementById('tabNutri').classList.toggle('active', isNutri);
             document.getElementById('tabLogo').classList.toggle('active', !isNutri);
