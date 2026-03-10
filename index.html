@@ -67,6 +67,7 @@
             perspective: 1000px;
             width: 100%;
             max-width: 420px;
+            /* Se quita el cursor pointer general para evitar confusión */
         }
 
         .flip-inner {
@@ -89,6 +90,9 @@
             background: white;
             overflow: hidden;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         .flip-front {
@@ -102,8 +106,6 @@
             height: 100%;
             top: 0;
             left: 0;
-            display: flex;
-            flex-direction: column;
         }
 
         .img-blend {
@@ -140,11 +142,11 @@
         }
         .nutri-table .bold { font-weight: 800; color: #1e293b; }
 
-        /* Tabs UI Mejorada */
+        /* Tabs superiores */
         .tab-btn {
             flex: 1;
             padding: 14px 0;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 900;
             text-transform: uppercase;
             color: #94a3b8;
@@ -157,6 +159,27 @@
             background-color: #eff6ff;
             border-bottom-color: #2563eb;
         }
+
+        .circle-btn-modal {
+            position: absolute;
+            top: 1.25rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e293b;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            z-index: 60;
+            transition: transform 0.1s, background-color 0.2s;
+            cursor: pointer;
+        }
+        .circle-btn-modal:active { transform: scale(0.9); }
+        .circle-btn-modal.left { left: 1.25rem; }
+        .circle-btn-modal.right { right: 1.25rem; }
     </style>
 </head>
 <body>
@@ -176,7 +199,7 @@
                 
                 <div class="relative mb-3">
                     <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="searchInput" placeholder="Buscar nombre, SKU, ingredientes..." class="w-full bg-slate-100/50 border-2 border-transparent focus:border-blue-500/20 focus:bg-white rounded-2xl py-3 pl-11 pr-4 text-sm outline-none transition-all shadow-sm">
+                    <input type="text" id="searchInput" placeholder="Buscar nombre, SKU..." class="w-full bg-slate-100/50 border-2 border-transparent focus:border-blue-500/20 focus:bg-white rounded-2xl py-3 pl-11 pr-4 text-sm outline-none transition-all shadow-sm">
                 </div>
             </div>
 
@@ -189,7 +212,7 @@
         <main class="p-4 max-w-7xl mx-auto pb-32">
             <div id="loadingOverlay" class="flex flex-col items-center justify-center py-32 text-center">
                 <div class="loader mb-4"></div>
-                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest animate-pulse">Cargando Fichas Técnicas...</p>
+                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest animate-pulse">Cargando...</p>
             </div>
             <div id="productGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
             <div id="emptyState" class="hidden flex flex-col items-center justify-center py-32 text-slate-300">
@@ -201,25 +224,25 @@
 
     <!-- PRODUCT MODAL -->
     <div id="productModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[70] hidden flex items-center justify-center p-4">
+        <!-- He quitado onmousedown/onmouseup de aquí para evitar flip involuntario al hacer scroll o click en la tarjeta -->
         <div id="flipContainer" class="flip-container">
             <div id="flipInner" class="flip-inner">
                 
                 <!-- FRONT: INFO COMERCIAL -->
                 <div class="flip-front" id="frontSide">
-                    <button onclick="closeProductModal()" class="absolute top-5 right-5 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-800 shadow-sm z-10 active:scale-90 transition-transform">
+                    <!-- Botones de Acción (Única forma de girar/cerrar en Web) -->
+                    <button onclick="flipCardEvent(event)" class="circle-btn-modal left">
+                        <i class="fa-solid fa-rotate text-blue-600"></i>
+                    </button>
+                    <button onclick="closeProductModal(event)" class="circle-btn-modal right">
                         <i class="fa-solid fa-xmark text-lg"></i>
                     </button>
                     
-                    <button onclick="flipCard()" class="absolute top-5 left-5 px-3 py-1.5 bg-blue-600/10 backdrop-blur rounded-full flex items-center gap-2 text-blue-600 z-10 active:scale-90 transition-transform">
-                        <i class="fa-solid fa-circle-info text-xs"></i>
-                        <span class="text-[9px] font-black uppercase tracking-widest">Ficha Técnica</span>
-                    </button>
-                    
                     <div class="bg-slate-50 p-6 flex items-center justify-center aspect-square overflow-hidden">
-                        <img id="modalImg" src="" class="max-h-full object-contain img-blend" alt="Imagen del producto">
+                        <img id="modalImg" src="" class="max-h-full object-contain img-blend" alt="Producto">
                     </div>
                     
-                    <div class="p-6">
+                    <div class="p-6 flex-1 flex flex-col justify-center">
                         <div class="mb-5">
                             <span id="modalCategory" class="text-[9px] font-black uppercase tracking-widest text-blue-600 mb-1 block">CATEGORÍA</span>
                             <h2 id="modalTitle" class="text-xl font-black text-slate-800 leading-tight mb-1 uppercase tracking-tighter line-clamp-2">Nombre</h2>
@@ -245,24 +268,25 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-3">
-                            <div class="flex-1 bg-slate-100 px-4 py-3 rounded-xl flex items-center justify-between">
-                                <span class="text-[9px] font-black text-slate-400 uppercase">SKU</span>
-                                <span id="modalSku" class="text-xs font-mono font-bold text-slate-800 tracking-wider">0000</span>
-                            </div>
-                        </div>
-                        <div class="mt-4 text-center text-[8px] text-slate-300 font-black uppercase tracking-widest">
-                             Desliza para girar ficha técnica
+                        <div class="bg-slate-100 px-4 py-3 rounded-xl flex items-center justify-between">
+                            <span class="text-[9px] font-black text-slate-400 uppercase">SKU</span>
+                            <span id="modalSku" class="text-xs font-mono font-bold text-slate-800 tracking-wider">0000</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- BACK: INFO TÉCNICA (TABS CLICK ONLY) -->
+                <!-- BACK: INFO TÉCNICA -->
                 <div class="flip-back" id="backSide">
-                    <div class="flex border-b border-slate-100">
-                        <button onclick="switchTab('nutri')" id="tabNutri" class="tab-btn active">Nutricional</button>
-                        <button onclick="switchTab('logo')" id="tabLogo" class="tab-btn">Logística</button>
-                        <button onclick="flipCard()" class="px-5 text-slate-400 active:scale-95 transition-transform"><i class="fa-solid fa-rotate-right"></i></button>
+                    <button onclick="flipCardEvent(event)" class="circle-btn-modal left" style="transform: scaleX(-1);">
+                        <i class="fa-solid fa-rotate text-blue-600"></i>
+                    </button>
+                    <button onclick="closeProductModal(event)" class="circle-btn-modal right" style="transform: scaleX(-1);">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+
+                    <div class="flex border-b border-slate-100 bg-slate-50/50 pt-16">
+                        <button onclick="switchTab(event, 'nutri')" id="tabNutri" class="tab-btn active">Ficha Nutricional</button>
+                        <button onclick="switchTab(event, 'logo')" id="tabLogo" class="tab-btn">Planograma</button>
                     </div>
 
                     <div id="contentNutri" class="flex-1 overflow-y-auto p-6 bg-white">
@@ -288,23 +312,17 @@
                             <h4 class="text-[9px] font-black text-slate-400 uppercase mb-2 flex items-center gap-2">
                                 <i class="fa-solid fa-leaf text-[8px] text-green-500"></i> Ingredientes
                             </h4>
-                            <p id="modalIngredientes" class="text-[11px] text-slate-600 leading-relaxed italic">
-                                Información no disponible.
-                            </p>
-                        </div>
-                        
-                        <div class="mt-6 text-center text-[8px] text-slate-300 font-black uppercase tracking-widest">
-                             Desliza para volver al frente
+                            <p id="modalIngredientes" class="text-[11px] text-slate-600 leading-relaxed italic">-</p>
                         </div>
                     </div>
 
                     <div id="contentLogo" class="hidden flex-1 flex flex-col p-6 bg-white overflow-y-auto">
                         <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
-                            <h3 class="text-[10px] font-black uppercase text-slate-800 tracking-widest">Datos de Logística</h3>
+                            <h3 class="text-[10px] font-black uppercase text-slate-800 tracking-widest">Logística</h3>
                         </div>
 
-                        <div class="flex-1 bg-slate-50 rounded-3xl border-2 border-slate-100 flex items-center justify-center p-2 mb-4 relative min-h-[250px]">
-                            <img id="planogramImg" src="" class="max-h-full object-contain img-blend" alt="Planograma de exhibición">
+                        <div class="flex-1 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-center p-2 mb-4 relative min-h-[220px]">
+                            <img id="planogramImg" src="" class="max-h-full object-contain img-blend" alt="Planograma">
                         </div>
 
                         <div class="bg-blue-50 p-4 rounded-2xl flex items-center gap-4 border border-blue-100">
@@ -315,10 +333,6 @@
                                 <p class="text-[9px] font-black text-blue-400 uppercase tracking-widest">Conservación</p>
                                 <p id="modalConservation" class="text-xs font-bold text-slate-700 uppercase tracking-tighter">-</p>
                             </div>
-                        </div>
-
-                        <div class="mt-6 text-center text-[8px] text-slate-300 font-black uppercase tracking-widest">
-                             Desliza para volver al frente
                         </div>
                     </div>
                 </div>
@@ -334,32 +348,26 @@
         let products = [];
         let currentCat = 'TODOS';
         let categoryColorMap = {'TODOS': '#1e293b'};
-        let activeTab = 'nutri';
         let isFlipped = false;
 
-        // SWIPE TO FLIP LOGIC
-        let touchstartX = 0;
-        let touchendX = 0;
+        let startX = 0;
+        let startY = 0;
 
+        // Soporte para gestos (Swipe) solo en Touch Devices
         const flipInner = document.getElementById('flipInner');
-        
-        // El swipe ahora activa el giro total de la ficha
         flipInner.addEventListener('touchstart', e => {
-            touchstartX = e.changedTouches[0].screenX;
+            startX = e.changedTouches[0].screenX;
+            startY = e.changedTouches[0].screenY;
         }, {passive: true});
 
         flipInner.addEventListener('touchend', e => {
-            touchendX = e.changedTouches[0].screenX;
-            handleSwipeFlip();
-        }, {passive: true});
-
-        function handleSwipeFlip() {
-            const threshold = 60; 
-            // Si desliza a la izquierda o derecha lo suficiente, giramos la ficha
-            if (Math.abs(touchendX - touchstartX) > threshold) {
+            const diffX = e.changedTouches[0].screenX - startX;
+            const diffY = Math.abs(e.changedTouches[0].screenY - startY);
+            // Si el deslizamiento es horizontal y suficiente, girar
+            if (Math.abs(diffX) > 80 && diffY < 100) {
                 flipCard();
             }
-        }
+        }, {passive: true});
 
         async function init() {
             try {
@@ -391,14 +399,14 @@
                     planograma: (row[10] || '').trim(),
                     conservacion: (row[11] || 'S/D').trim(),
                     ingredientes: (row[12] || '').trim(),
-                    valorEnergetico: (row[13] || '-').trim(),
-                    proteinas: (row[14] || '-').trim(),
-                    grasasTotales: (row[15] || '-').trim(),
-                    grasasSaturadas: (row[16] || '-').trim(),
-                    carbohidratos: (row[17] || '-').trim(),
-                    azucares: (row[18] || '-').trim(),
-                    sodio: (row[19] || '-').trim(),
-                    porcion: (row[20] || '1 unidad').trim(),
+                    porcion: (row[13] || '1 unidad').trim(),
+                    valorEnergetico: (row[14] || '-').trim(),
+                    proteinas: (row[15] || '-').trim(),
+                    grasasTotales: (row[16] || '-').trim(),
+                    grasasSaturadas: (row[17] || '-').trim(),
+                    carbohidratos: (row[18] || '-').trim(),
+                    azucares: (row[19] || '-').trim(),
+                    sodio: (row[20] || '-').trim(),
                     vitaminaA: (row[21] || '-').trim(),
                     vitaminaD: (row[22] || '-').trim(),
                     vitaminaE: (row[23] || '-').trim(),
@@ -428,27 +436,23 @@
             currentCat = cat.toUpperCase();
             renderCategories();
             applyFilters();
-            const container = document.getElementById('appScrollContainer');
-            if (container) container.scrollTo({ top: 0, behavior: 'auto' });
+            document.getElementById('appScrollContainer').scrollTo({ top: 0, behavior: 'auto' });
         }
 
         function applyFilters() {
             const term = document.getElementById('searchInput').value.toLowerCase();
             const filtered = products.filter(p => {
                 const matchCat = currentCat === 'TODOS' || p.marca.toUpperCase() === currentCat;
-                const matchSearch = p.nombre.toLowerCase().includes(term) || 
-                                    p.sku.toLowerCase().includes(term);
+                const matchSearch = p.nombre.toLowerCase().includes(term) || p.sku.toLowerCase().includes(term);
                 return matchCat && matchSearch;
             });
             renderProducts(filtered);
-            const container = document.getElementById('appScrollContainer');
-            if (container && term.length > 0) container.scrollTop = 0;
         }
 
         function renderProducts(items) {
             const grid = document.getElementById('productGrid');
             grid.innerHTML = items.map(p => `
-                <div onclick="openProductModal('${p.sku}')" class="bg-white rounded-[1.8rem] p-2.5 shadow-sm border border-slate-100 flex flex-col h-full active:scale-95 transition-transform">
+                <div onclick="openProductModal('${p.sku}')" class="bg-white rounded-[1.8rem] p-2.5 shadow-sm border border-slate-100 flex flex-col h-full active:scale-95 transition-transform cursor-pointer">
                     <div class="relative aspect-square bg-slate-50 rounded-[1.4rem] mb-2.5 overflow-hidden flex items-center justify-center">
                         <img src="${p.img || 'https://via.placeholder.com/200'}" class="w-full h-full img-blend p-3" alt="${p.nombre}">
                     </div>
@@ -480,7 +484,8 @@
             document.getElementById('modalPorcion').innerText = p.porcion;
             document.getElementById('modalIngredientes').innerText = p.ingredientes || "Ingredientes no detallados.";
             
-            const fullNutrients = [
+            // LISTA COMPLETA DE NUTRIENTES (Ahora mapea todos los puestos del CSV)
+            const nutrients = [
                 { label: 'Valor Energético', val: p.valorEnergetico },
                 { label: 'Proteínas', val: p.proteinas },
                 { label: 'Carbohidratos', val: p.carbohidratos },
@@ -496,27 +501,20 @@
                 { label: 'Hierro', val: p.hierro }
             ];
 
-            const rowsToDisplay = fullNutrients.filter(n => n.val && n.val !== '-' && n.val !== '');
+            const rows = nutrients.filter(n => n.val && n.val !== '-');
+            document.getElementById('nutriRows').innerHTML = rows.map(r => `
+                <tr><td class="bold">${r.label}</td><td>${r.val}</td><td class="text-slate-400 font-medium">-</td></tr>
+            `).join('');
 
-            document.getElementById('nutriRows').innerHTML = rowsToDisplay.length > 0 
-                ? rowsToDisplay.map(r => `
-                    <tr>
-                        <td class="bold">${r.label}</td>
-                        <td>${r.val}</td>
-                        <td class="text-slate-400 font-medium">-</td>
-                    </tr>
-                `).join('')
-                : '<tr><td colspan="3" class="text-center py-8 text-slate-400 italic">Información no disponible</td></tr>';
-
-            document.getElementById('planogramImg').src = p.planograma || 'https://via.placeholder.com/400?text=Planograma+no+disponible';
+            document.getElementById('planogramImg').src = p.planograma || 'https://via.placeholder.com/400?text=S/D';
             document.getElementById('modalConservation').innerText = p.conservacion;
 
-            switchTab('nutri');
+            switchTab(null, 'nutri');
             document.getElementById('productModal').classList.remove('hidden');
         }
 
-        function switchTab(tab) {
-            activeTab = tab;
+        function switchTab(event, tab) {
+            if (event) event.stopPropagation();
             const isNutri = tab === 'nutri';
             document.getElementById('tabNutri').classList.toggle('active', isNutri);
             document.getElementById('tabLogo').classList.toggle('active', !isNutri);
@@ -524,12 +522,20 @@
             document.getElementById('contentLogo').classList.toggle('hidden', isNutri);
         }
 
+        function flipCardEvent(event) {
+            if (event) event.stopPropagation();
+            flipCard();
+        }
+
         function flipCard() { 
             isFlipped = !isFlipped;
             document.getElementById('flipContainer').classList.toggle('is-flipped', isFlipped); 
         }
         
-        function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
+        function closeProductModal(event) { 
+            if (event) event.stopPropagation();
+            document.getElementById('productModal').classList.add('hidden'); 
+        }
 
         window.onclick = (e) => { if (e.target.id == 'productModal') closeProductModal(); }
         document.getElementById('searchInput').addEventListener('input', applyFilters);
