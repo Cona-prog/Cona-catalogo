@@ -66,11 +66,14 @@
             perspective: 1000px;
             width: 100%;
             max-width: 420px;
+            height: 85vh; /* Altura fija para el contenedor del modal */
+            max-height: 700px;
         }
 
         .flip-inner {
             position: relative;
             width: 100%;
+            height: 100%;
             transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
@@ -82,6 +85,7 @@
         .flip-front, .flip-back {
             position: absolute;
             width: 100%;
+            height: 100%;
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
             border-radius: 2.5rem;
@@ -90,20 +94,23 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             display: flex;
             flex-direction: column;
-            height: 100%;
         }
 
         .flip-front {
-            position: relative;
             z-index: 2;
         }
 
         .flip-back {
             transform: rotateY(180deg);
             z-index: 1;
-            height: 100%;
-            top: 0;
-            left: 0;
+        }
+
+        /* Contenedores de scroll interno mejorados */
+        .modal-scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 2rem;
         }
 
         .img-blend {
@@ -207,7 +214,7 @@
         <main class="p-4 max-w-7xl mx-auto pb-32">
             <div id="loadingOverlay" class="flex flex-col items-center justify-center py-32 text-center">
                 <div class="loader mb-4"></div>
-                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest animate-pulse">Cargando...</p>
+                <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest animate-pulse">Cargando catálogo...</p>
             </div>
             <div id="productGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
             <div id="emptyState" class="hidden flex flex-col items-center justify-center py-32 text-slate-300">
@@ -231,18 +238,20 @@
                         <i class="fa-solid fa-xmark text-lg"></i>
                     </button>
                     
-                    <div class="bg-slate-50 p-6 flex items-center justify-center aspect-square overflow-hidden">
+                    <!-- Imagen fija arriba -->
+                    <div class="bg-slate-50 p-6 flex items-center justify-center aspect-square overflow-hidden shrink-0">
                         <img id="modalImg" src="" class="max-h-full object-contain img-blend" alt="Producto">
                     </div>
                     
-                    <div class="p-6 flex-1 flex flex-col justify-center">
+                    <!-- Información con scroll si es muy larga -->
+                    <div class="p-6 flex-1 flex flex-col modal-scroll-area">
                         <div class="mb-5">
                             <span id="modalCategory" class="text-[9px] font-black uppercase tracking-widest text-blue-600 mb-1 block">CATEGORÍA</span>
                             <h2 id="modalTitle" class="text-xl font-black text-slate-800 leading-tight mb-1 uppercase tracking-tighter line-clamp-2">Nombre</h2>
                             <p id="modalPres" class="text-slate-400 font-medium text-xs">Presentación</p>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2 mb-6">
+                        <div class="grid grid-cols-2 gap-2 mb-6 shrink-0">
                             <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 text-center">
                                 <p class="text-[8px] text-slate-400 uppercase font-black mb-0.5">EAN</p>
                                 <p id="modalEan" class="text-[10px] font-bold text-slate-700">-</p>
@@ -261,7 +270,7 @@
                             </div>
                         </div>
 
-                        <div class="bg-slate-100 px-4 py-3 rounded-xl flex items-center justify-between">
+                        <div class="bg-slate-100 px-4 py-3 rounded-xl flex items-center justify-between shrink-0">
                             <span class="text-[9px] font-black text-slate-400 uppercase">SKU</span>
                             <span id="modalSku" class="text-xs font-mono font-bold text-slate-800 tracking-wider">0000</span>
                         </div>
@@ -277,12 +286,13 @@
                         <i class="fa-solid fa-xmark text-lg"></i>
                     </button>
 
-                    <div class="flex border-b border-slate-100 bg-slate-50/50 pt-16">
+                    <div class="flex border-b border-slate-100 bg-slate-50/50 pt-16 shrink-0">
                         <button onclick="switchTab(event, 'nutri')" id="tabNutri" class="tab-btn active">Ficha Nutricional</button>
                         <button onclick="switchTab(event, 'logo')" id="tabLogo" class="tab-btn">Planograma</button>
                     </div>
 
-                    <div id="contentNutri" class="flex-1 overflow-y-auto p-6 bg-white">
+                    <!-- Ficha Nutricional con Scroll -->
+                    <div id="contentNutri" class="flex-1 modal-scroll-area p-6 bg-white">
                         <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
                             <h3 class="text-[10px] font-black uppercase text-slate-800 tracking-widest">Tabla Nutricional</h3>
                             <div class="text-[9px] font-bold text-blue-600 px-2 py-1 bg-blue-50 rounded-lg">
@@ -313,15 +323,16 @@
                         </div>
                     </div>
 
-                    <div id="contentLogo" class="hidden flex-1 flex flex-col p-6 bg-white overflow-y-auto">
+                    <!-- Planograma con Scroll -->
+                    <div id="contentLogo" class="hidden flex-1 modal-scroll-area p-6 bg-white">
                         <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
                             <h3 class="text-[10px] font-black uppercase text-slate-800 tracking-widest">Logística</h3>
                         </div>
-                        <div class="flex-1 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-center p-2 mb-4 relative min-h-[220px]">
+                        <div class="bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-center p-2 mb-4 relative min-h-[220px]">
                             <img id="planogramImg" src="" class="max-h-full object-contain img-blend" alt="Planograma">
                         </div>
                         <div class="bg-blue-50 p-4 rounded-2xl flex items-center gap-4 border border-blue-100">
-                            <div class="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600">
+                            <div class="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600 shrink-0">
                                 <i class="fa-solid fa-temperature-half text-lg"></i>
                             </div>
                             <div>
@@ -341,24 +352,10 @@
         const COLORS = ['#2563eb', '#db2777', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#dc2626', '#4f46e5', '#16a34a', '#9333ea'];
         
         let products = [];
-        let nutriHeaders = []; // Para guardar los nombres de las columnas dinámicas
+        let globalHeaders = []; 
         let currentCat = 'TODOS';
         let categoryColorMap = {'TODOS': '#1e293b'};
         let isFlipped = false;
-        let startX = 0;
-        let startY = 0;
-
-        const flipInner = document.getElementById('flipInner');
-        flipInner.addEventListener('touchstart', e => {
-            startX = e.changedTouches[0].screenX;
-            startY = e.changedTouches[0].screenY;
-        }, {passive: true});
-
-        flipInner.addEventListener('touchend', e => {
-            const diffX = e.changedTouches[0].screenX - startX;
-            const diffY = Math.abs(e.changedTouches[0].screenY - startY);
-            if (Math.abs(diffX) > 80 && diffY < 100) flipCard();
-        }, {passive: true});
 
         async function init() {
             try {
@@ -369,43 +366,49 @@
                 generateColorMap();
                 renderCategories();
                 applyFilters();
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                console.error("Error cargando datos:", e);
+                document.getElementById('loadingOverlay').innerHTML = "<p class='text-red-500 font-bold'>Error al cargar el catálogo</p>";
+            }
         }
 
         function parseData(content) {
             const lines = content.split(/\r?\n/).filter(line => line.trim() !== "");
-            const headers = lines[0].split('\t');
+            if (lines.length === 0) return;
+
+            const firstLine = lines[0];
+            const separator = firstLine.includes('\t') ? '\t' : ',';
             
-            // Guardamos los nombres de las columnas desde la O (índice 14) hasta el final, 
-            // saltando la AB (índice 27) que es comentario
-            nutriHeaders = headers.slice(14); 
+            globalHeaders = firstLine.split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
 
             products = lines.slice(1).map(line => {
-                const row = line.split('\t');
+                const row = line.split(separator).map(cell => cell.trim().replace(/^"|"$/g, ''));
+                
                 const p = {
-                    marca: (row[0] || 'S/D').trim(),
-                    subcat: (row[1] || '').trim(),
-                    nombre: (row[2] || 'Sin Nombre').trim(),
-                    presentacion: (row[3] || '').trim(),
-                    sku: (row[4] || '0').trim(),
-                    img: (row[5] || '').trim(),
-                    ean: (row[6] || '-').trim(),
-                    caja: (row[7] || '-').trim(),
-                    vida: (row[8] || '-').trim(),
-                    precio: (row[9] || '0').trim(),
-                    planograma: (row[10] || '').trim(),
-                    conservacion: (row[11] || 'S/D').trim(),
-                    ingredientes: (row[12] || '').trim(), // M
-                    porcion: (row[13] || '').trim(),      // N
-                    notaFicha: (row[27] || '').trim(),    // AB
-                    dynamicNutri: {} // Aquí guardaremos todo lo demás
+                    marca: row[0] || 'S/D',
+                    subcat: row[1] || '',
+                    nombre: row[2] || 'Sin Nombre',
+                    presentacion: row[3] || '',
+                    sku: row[4] || '0',
+                    img: row[5] || '',
+                    ean: row[6] || '-',
+                    caja: row[7] || '-',
+                    vida: row[8] || '-',
+                    precio: row[9] || '0',
+                    planograma: row[10] || '',
+                    conservacion: row[11] || 'S/D',
+                    ingredientes: row[12] || '', 
+                    porcion: row[13] || '',
+                    notaFicha: row[27] || '', 
+                    dynamicNutri: {} 
                 };
 
-                // Llenamos los datos nutricionales dinámicamente
-                nutriHeaders.forEach((header, index) => {
-                    const colIndex = 14 + index;
-                    if (colIndex !== 27) { // No incluimos la nota en la tabla
-                        p.dynamicNutri[header] = (row[colIndex] || '-').trim();
+                globalHeaders.forEach((header, i) => {
+                    if (i >= 14 && i !== 27 && header !== "" && header !== undefined) {
+                        const val = row[i] || '-';
+                        if (header.length > 1) {
+                            p.dynamicNutri[header] = val;
+                        }
                     }
                 });
 
@@ -478,25 +481,24 @@
             document.getElementById('modalPrecio').innerText = '$' + p.precio;
             document.getElementById('modalSku').innerText = p.sku;
             document.getElementById('modalPorcion').innerText = p.porcion;
-            document.getElementById('modalIngredientes').innerText = p.ingredientes || "Ingredientes no detallados.";
+            document.getElementById('modalIngredientes').innerText = p.ingredientes || "No detallados.";
             
             const notaCont = document.getElementById('modalNotaFichaCont');
             const notaText = document.getElementById('modalNotaFicha');
-            if (p.notaFicha && p.notaFicha !== '-') {
+            if (p.notaFicha && p.notaFicha !== '-' && p.notaFicha !== "") {
                 notaText.innerText = p.notaFicha;
                 notaCont.classList.remove('hidden');
             } else {
                 notaCont.classList.add('hidden');
             }
 
-            // CARGA DINÁMICA DE TABLA:
             const rowsHtml = Object.entries(p.dynamicNutri)
-                .filter(([label, raw]) => raw && raw !== '-')
+                .filter(([label, raw]) => raw && raw !== '-' && raw !== "")
                 .map(([label, raw]) => {
                     let cant = raw;
                     let vd = '-';
                     const match = raw.match(/[\-\/\|]/);
-                    if (match) {
+                    if (match && !raw.startsWith('-')) {
                         const parts = raw.split(match[0]);
                         cant = parts[0].trim();
                         vd = parts[1] ? parts[1].trim() : '-';
@@ -504,12 +506,15 @@
                     return `<tr><td class="bold">${label}</td><td>${cant}</td><td class="text-slate-500 font-bold">${vd}</td></tr>`;
                 }).join('');
 
-            document.getElementById('nutriRows').innerHTML = rowsHtml;
+            document.getElementById('nutriRows').innerHTML = rowsHtml || "<tr><td colspan='3' class='text-center py-4 text-slate-400'>Datos no disponibles</td></tr>";
             document.getElementById('planogramImg').src = p.planograma || 'https://via.placeholder.com/400?text=S/D';
             document.getElementById('modalConservation').innerText = p.conservacion;
 
             switchTab(null, 'nutri');
             document.getElementById('productModal').classList.remove('hidden');
+            
+            // Reset de scroll al abrir
+            document.querySelectorAll('.modal-scroll-area').forEach(el => el.scrollTop = 0);
         }
 
         function switchTab(event, tab) {
@@ -519,6 +524,8 @@
             document.getElementById('tabLogo').classList.toggle('active', !isNutri);
             document.getElementById('contentNutri').classList.toggle('hidden', !isNutri);
             document.getElementById('contentLogo').classList.toggle('hidden', isNutri);
+            // Reset scroll al cambiar de pestaña
+            document.querySelectorAll('.modal-scroll-area').forEach(el => el.scrollTop = 0);
         }
 
         function flipCardEvent(event) {
@@ -538,6 +545,7 @@
 
         window.onclick = (e) => { if (e.target.id == 'productModal') closeProductModal(); }
         document.getElementById('searchInput').addEventListener('input', applyFilters);
+        
         init();
     </script>
 </body>
