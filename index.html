@@ -64,11 +64,11 @@
 
         /* Flip Container & Inner */
         .flip-container {
-            perspective: 1200px;
+            perspective: 2000px;
             width: 100%;
             max-width: 400px;
-            height: 80vh;
-            max-height: 650px;
+            height: 85vh;
+            max-height: 700px;
             position: relative;
         }
 
@@ -76,13 +76,59 @@
             position: relative;
             width: 100%;
             height: 100%;
-            transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
 
         .flip-container.is-flipped .flip-inner {
             transform: rotateY(180deg);
         }
+
+        /* Botones Integrados */
+        .integrated-controls {
+            position: absolute;
+            top: 1rem;
+            left: 1.25rem;
+            right: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            z-index: 60; 
+        }
+
+        .circle-btn-modal {
+            width: 2.6rem;
+            height: 2.6rem;
+            background-color: white;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e293b;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            border: 1px solid #f1f5f9;
+            transition: transform 0.2s ease, background-color 0.2s;
+        }
+
+        .share-btn-modal {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem; 
+            width: 2.6rem;
+            height: 2.6rem;
+            background-color: white;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e40af;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 60;
+            cursor: pointer;
+            border: 1px solid #f1f5f9;
+        }
+
+        .circle-btn-modal:active, .share-btn-modal:active { transform: scale(0.9); }
 
         .flip-front, .flip-back {
             position: absolute;
@@ -93,17 +139,17 @@
             -webkit-backface-visibility: hidden;
             border-radius: 2.5rem;
             background: white;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            transform-style: preserve-3d; 
         }
 
         .flip-back {
             transform: rotateY(180deg);
         }
 
-        /* Scroll Area */
         .modal-scroll-area {
             flex: 1;
             overflow-y: auto;
@@ -114,7 +160,10 @@
 
         .img-blend {
             mix-blend-mode: multiply;
+            max-width: 100%; /* Aumentado de 90% a 100% */
+            max-height: 100%; /* Aumentado de 90% a 100% */
             object-fit: contain;
+            display: block;
         }
 
         .loader {
@@ -162,40 +211,32 @@
             border-bottom-color: #2563eb;
         }
 
-        .circle-btn-modal {
-            position: absolute;
-            top: 1rem;
-            width: 2.5rem;
-            height: 2.5rem;
-            background-color: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(4px);
-            border-radius: 9999px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #1e293b;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        #toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             z-index: 100;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-        .circle-btn-modal:active { transform: scale(0.9); }
-        .circle-btn-modal.left { left: 1rem; }
-        .circle-btn-modal.right { right: 1rem; }
-
-        /* FIX: Evitar que los botones de la cara trasera se vean al revés */
-        .flip-back .circle-btn-modal {
-            transform: rotateY(180deg);
-        }
-        /* Para que el efecto de click siga funcionando en la cara trasera */
-        .flip-back .circle-btn-modal:active {
-            transform: rotateY(180deg) scale(0.9);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
 
+    <div id="toast">Enlace copiado</div>
+
     <div id="appScrollContainer">
+        <!-- HEADER -->
         <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
             <div class="px-4 pt-4 pb-2 max-w-7xl mx-auto">
                 <div class="flex justify-between items-center mb-4">
@@ -218,6 +259,7 @@
             </div>
         </header>
 
+        <!-- MAIN GRID -->
         <main class="p-4 max-w-7xl mx-auto pb-32">
             <div id="loadingOverlay" class="flex flex-col items-center justify-center py-32 text-center">
                 <div class="loader mb-4"></div>
@@ -232,24 +274,34 @@
     </div>
 
     <!-- PRODUCT MODAL -->
-    <div id="productModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[70] hidden flex items-center justify-center p-4">
-        <div id="flipContainer" class="flip-container">
+    <div id="productModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[70] hidden flex items-center justify-center p-6">
+        
+        <div class="flip-container" id="mainFlipContainer">
+            
             <div id="flipInner" class="flip-inner">
-                
-                <!-- FRONT -->
+
+                <!-- CARA FRONTAL -->
                 <div class="flip-front" id="frontSide">
-                    <div class="circle-btn-modal left" onclick="flipCardEvent(event)">
-                        <i class="fa-solid fa-rotate text-blue-600"></i>
+                    <!-- Controles superiores -->
+                    <div class="integrated-controls">
+                        <div class="circle-btn-modal" onclick="flipCardEvent(event)">
+                            <i class="fa-solid fa-rotate text-blue-600"></i>
+                        </div>
+                        <div class="circle-btn-modal" onclick="closeProductModal(event)">
+                            <i class="fa-solid fa-xmark text-xl"></i>
+                        </div>
                     </div>
-                    <div class="circle-btn-modal right" onclick="closeProductModal(event)">
-                        <i class="fa-solid fa-xmark text-lg"></i>
+
+                    <!-- Contenedor imagen: p-16 cambiado a p-8 para agrandar el contenido -->
+                    <div class="relative bg-slate-50 p-8 flex items-center justify-center h-[42%] min-h-[180px] shrink-0">
+                        <img id="modalImg" src="" class="img-blend" alt="Producto">
+                        <!-- BOTÓN COMPARTIR GENÉRICO -->
+                        <div class="share-btn-modal" onclick="handleGenericShare(event)">
+                            <i class="fa-solid fa-share-nodes text-lg"></i>
+                        </div>
                     </div>
                     
-                    <div class="bg-slate-50 p-6 flex items-center justify-center aspect-square shrink-0">
-                        <img id="modalImg" src="" class="max-h-full object-contain img-blend" alt="Producto">
-                    </div>
-                    
-                    <div class="modal-scroll-area p-6 pt-2">
+                    <div class="modal-scroll-area p-6 pt-4">
                         <div class="mb-5">
                             <span id="modalCategory" class="text-[9px] font-black uppercase tracking-widest text-blue-600 mb-1 block">CATEGORÍA</span>
                             <h2 id="modalTitle" class="text-xl font-black text-slate-800 leading-tight mb-1 uppercase tracking-tighter">Nombre</h2>
@@ -282,14 +334,15 @@
                     </div>
                 </div>
 
-                <!-- BACK -->
+                <!-- CARA TRASERA -->
                 <div class="flip-back" id="backSide">
-                    <!-- Ajustado: Girar a la izquierda y Cerrar a la derecha para mantener coherencia -->
-                    <div class="circle-btn-modal left" onclick="flipCardEvent(event)">
-                        <i class="fa-solid fa-rotate text-blue-600"></i>
-                    </div>
-                    <div class="circle-btn-modal right" onclick="closeProductModal(event)">
-                        <i class="fa-solid fa-xmark text-lg"></i>
+                    <div class="integrated-controls">
+                        <div class="circle-btn-modal" onclick="flipCardEvent(event)">
+                            <i class="fa-solid fa-rotate text-blue-600"></i>
+                        </div>
+                        <div class="circle-btn-modal" onclick="closeProductModal(event)">
+                            <i class="fa-solid fa-xmark text-xl"></i>
+                        </div>
                     </div>
 
                     <div class="flex border-b border-slate-100 bg-slate-50/50 pt-16 shrink-0">
@@ -297,7 +350,6 @@
                         <button onclick="switchTab(event, 'logo')" id="tabLogo" class="tab-btn">Logística</button>
                     </div>
 
-                    <!-- Ficha Nutricional -->
                     <div id="contentNutri" class="flex-1 modal-scroll-area p-6 bg-white">
                         <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
                             <h3 class="text-[10px] font-black uppercase text-slate-800 tracking-widest">Información Nutricional</h3>
@@ -327,11 +379,11 @@
                         </div>
                     </div>
 
-                    <!-- Planograma / Logística -->
                     <div id="contentLogo" class="hidden flex-1 modal-scroll-area p-6 bg-white">
                         <h3 class="text-[10px] font-black uppercase text-slate-800 tracking-widest mb-4">Planograma</h3>
+                        <!-- p-12 cambiado a p-4 para agrandar el planograma -->
                         <div class="bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-center p-4 mb-6 relative min-h-[220px]">
-                            <img id="planogramImg" src="" class="max-h-full object-contain img-blend" alt="Planograma">
+                            <img id="planogramImg" src="" class="img-blend" alt="Planograma">
                         </div>
                         <div class="bg-blue-50 p-4 rounded-2xl flex items-center gap-4 border border-blue-100">
                             <div class="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600 shrink-0">
@@ -358,6 +410,7 @@
         let currentCat = 'TODOS';
         let categoryColorMap = {'TODOS': '#1e293b'};
         let isFlipped = false;
+        let currentProduct = null;
 
         async function init() {
             try {
@@ -445,14 +498,14 @@
         function renderProducts(items) {
             const grid = document.getElementById('productGrid');
             grid.innerHTML = items.map(p => `
-                <div onclick="openProductModal('${p.sku}')" class="bg-white rounded-[1.8rem] p-2.5 shadow-sm border border-slate-100 flex flex-col h-full active:scale-95 transition-transform cursor-pointer">
-                    <div class="relative aspect-square bg-slate-50 rounded-[1.4rem] mb-2.5 overflow-hidden flex items-center justify-center">
-                        <img src="${p.img || 'https://via.placeholder.com/200'}" class="w-full h-full img-blend p-3" alt="${p.nombre}">
+                <div onclick="openProductModal('${p.sku}')" class="bg-white rounded-[1.8rem] p-2 shadow-sm border border-slate-100 flex flex-col h-full active:scale-95 transition-transform cursor-pointer overflow-hidden">
+                    <div class="relative aspect-square bg-slate-50 rounded-[1.4rem] mb-2.5 overflow-hidden flex items-center justify-center p-4">
+                        <img src="${p.img || 'https://via.placeholder.com/200'}" class="w-full h-full img-blend" alt="${p.nombre}">
                     </div>
-                    <div class="px-1 flex flex-col flex-1">
-                        <h3 class="text-[11px] font-bold text-slate-800 leading-tight line-clamp-2 mb-0.5 uppercase tracking-tighter">${p.nombre}</h3>
+                    <div class="px-2 pb-2 flex flex-col flex-1">
+                        <h3 class="text-[10px] font-bold text-slate-800 leading-tight line-clamp-2 mb-0.5 uppercase tracking-tighter">${p.nombre}</h3>
                         <p class="text-[9px] text-slate-400 font-medium mb-2">${p.presentacion}</p>
-                        <span class="text-[12px] font-black text-blue-600 tracking-tighter mt-auto">$${p.precio}</span>
+                        <span class="text-[11px] font-black text-blue-600 tracking-tighter mt-auto">$${p.precio}</span>
                     </div>
                 </div>
             `).join('');
@@ -463,8 +516,10 @@
             const p = products.find(x => x.sku === sku);
             if (!p) return;
             
+            currentProduct = p; 
             isFlipped = false;
-            document.getElementById('flipContainer').classList.remove('is-flipped');
+            document.getElementById('mainFlipContainer').classList.remove('is-flipped');
+            
             document.getElementById('modalImg').src = p.img || 'https://via.placeholder.com/400';
             document.getElementById('modalTitle').innerText = p.nombre;
             document.getElementById('modalCategory').innerText = p.marca + ' / ' + p.subcat;
@@ -508,6 +563,53 @@
             document.querySelectorAll('.modal-scroll-area').forEach(el => el.scrollTop = 0);
         }
 
+        async function handleGenericShare(event) {
+            if (event) event.stopPropagation();
+            if (!currentProduct) return;
+
+            const p = currentProduct;
+            const text = `📦 FICHA TÉCNICA: ${p.nombre.toUpperCase()}\n\n` +
+                         `• Marca: ${p.marca}\n` +
+                         `• SKU: ${p.sku}\n` +
+                         `• Presentación: ${p.presentacion}\n` +
+                         `• EAN: ${p.ean}\n` +
+                         `• U/Caja: ${p.caja}\n` +
+                         `• Vida Útil: ${p.vida}\n` +
+                         `• Precio: $${p.precio} (s/IVA)\n\n` +
+                         `🔗 Consulta más detalles en el catálogo.`;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: `Ficha: ${p.nombre}`,
+                        text: text,
+                        url: window.location.href
+                    });
+                } catch (err) {
+                    console.log('Compartido cancelado');
+                }
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast("Copiado al portapapeles");
+                } catch (err) {
+                    console.error('Error al copiar', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.opacity = '1';
+            setTimeout(() => t.style.opacity = '0', 2000);
+        }
+
         function switchTab(event, tab) {
             if (event) event.stopPropagation();
             const isNutri = tab === 'nutri';
@@ -521,7 +623,7 @@
         function flipCardEvent(event) {
             if (event) event.stopPropagation();
             isFlipped = !isFlipped;
-            document.getElementById('flipContainer').classList.toggle('is-flipped', isFlipped); 
+            document.getElementById('mainFlipContainer').classList.toggle('is-flipped', isFlipped); 
         }
         
         function closeProductModal(event) { 
