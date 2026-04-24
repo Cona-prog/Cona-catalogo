@@ -11,6 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="ConaApp">
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
@@ -116,16 +117,17 @@
             right: 1rem; 
             width: 2.6rem;
             height: 2.6rem;
-            background-color: white;
+            background-color: #1e40af;
             border-radius: 9999px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #1e40af;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(30, 64, 175, 0.4);
             z-index: 60;
             cursor: pointer;
-            border: 1px solid #f1f5f9;
+            border: none;
+            transition: all 0.2s;
         }
 
         .circle-btn-modal:active, .share-btn-modal:active { transform: scale(0.9); }
@@ -160,18 +162,18 @@
 
         .img-blend {
             mix-blend-mode: multiply;
-            max-width: 100%; /* Aumentado de 90% a 100% */
-            max-height: 100%; /* Aumentado de 90% a 100% */
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
             display: block;
         }
 
         .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #1e40af;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top: 3px solid #ffffff;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 35px;
+            height: 35px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -229,14 +231,63 @@
             transition: opacity 0.3s;
             pointer-events: none;
         }
+
+        /* Captura oculta para generar imagen */
+        #captureArea {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            width: 900px;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            padding: 0;
+        }
+
+        #captureHeader {
+            background-color: #1e40af;
+            width: 100%;
+            padding: 30px 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #captureBody {
+            display: flex;
+            padding: 40px;
+            gap: 40px;
+            background: #f1f5f9;
+        }
+
+        #sharingLoader {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
-    <div id="toast">Enlace copiado</div>
+    <div id="toast">Acción realizada</div>
+
+    <!-- Loader de Compartir -->
+    <div id="sharingLoader">
+        <div class="loader mb-6"></div>
+        <p class="text-[13px] font-black uppercase tracking-[0.2em] mb-2">Preparando envío</p>
+        <p class="text-[10px] text-blue-400 font-bold uppercase">Generando ficha institucional...</p>
+    </div>
 
     <div id="appScrollContainer">
-        <!-- HEADER -->
+        <!-- HEADER PRINCIPAL -->
         <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
             <div class="px-4 pt-4 pb-2 max-w-7xl mx-auto">
                 <div class="flex justify-between items-center mb-4">
@@ -262,7 +313,7 @@
         <!-- MAIN GRID -->
         <main class="p-4 max-w-7xl mx-auto pb-32">
             <div id="loadingOverlay" class="flex flex-col items-center justify-center py-32 text-center">
-                <div class="loader mb-4"></div>
+                <div class="loader !border-slate-200 !border-t-blue-600 mb-4"></div>
                 <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest animate-pulse">Sincronizando productos...</p>
             </div>
             <div id="productGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
@@ -275,14 +326,11 @@
 
     <!-- PRODUCT MODAL -->
     <div id="productModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[70] hidden flex items-center justify-center p-6">
-        
         <div class="flip-container" id="mainFlipContainer">
-            
             <div id="flipInner" class="flip-inner">
 
                 <!-- CARA FRONTAL -->
                 <div class="flip-front" id="frontSide">
-                    <!-- Controles superiores -->
                     <div class="integrated-controls">
                         <div class="circle-btn-modal" onclick="flipCardEvent(event)">
                             <i class="fa-solid fa-rotate text-blue-600"></i>
@@ -292,11 +340,10 @@
                         </div>
                     </div>
 
-                    <!-- Contenedor imagen: p-16 cambiado a p-8 para agrandar el contenido -->
                     <div class="relative bg-slate-50 p-8 flex items-center justify-center h-[42%] min-h-[180px] shrink-0">
-                        <img id="modalImg" src="" class="img-blend" alt="Producto">
-                        <!-- BOTÓN COMPARTIR GENÉRICO -->
-                        <div class="share-btn-modal" onclick="handleGenericShare(event)">
+                        <img id="modalImg" src="" class="img-blend" alt="Producto" crossorigin="anonymous">
+                        <!-- BOTÓN DE COMPARTIR NATIVO -->
+                        <div class="share-btn-modal" onclick="captureAndShareFicha(event)">
                             <i class="fa-solid fa-share-nodes text-lg"></i>
                         </div>
                     </div>
@@ -381,9 +428,8 @@
 
                     <div id="contentLogo" class="hidden flex-1 modal-scroll-area p-6 bg-white">
                         <h3 class="text-[10px] font-black uppercase text-slate-800 tracking-widest mb-4">Planograma</h3>
-                        <!-- p-12 cambiado a p-4 para agrandar el planograma -->
                         <div class="bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-center p-4 mb-6 relative min-h-[220px]">
-                            <img id="planogramImg" src="" class="img-blend" alt="Planograma">
+                            <img id="planogramImg" src="" class="img-blend" alt="Planograma" crossorigin="anonymous">
                         </div>
                         <div class="bg-blue-50 p-4 rounded-2xl flex items-center gap-4 border border-blue-100">
                             <div class="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600 shrink-0">
@@ -398,6 +444,31 @@
                 </div>
 
             </div>
+        </div>
+    </div>
+
+    <!-- ÁREA DE CAPTURA (OCULTA) -->
+    <div id="captureArea">
+        <div id="captureHeader">
+            <div style="display: flex; align-items: center; gap: 24px;">
+                <img src="https://www.conaprole.uy/themes/web/img/conaprole_logo.png" style="width: 80px; height: 80px; object-fit: contain; filter: brightness(0) invert(1);">
+                <div style="width: 4px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 9px;"></div>
+                <div>
+                    <h1 style="margin: 0; font-weight: 900; font-size: 32px; color: #ffffff; text-transform: uppercase; letter-spacing: -1px; line-height: 1;">CATÁLOGO <span style="color: #93c5fd;">2026</span></h1>
+                    <p style="margin: 0; color: #93c5fd; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 3px; margin-top: 4px;">Ficha Técnica Oficial</p>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <p id="captureDate" style="margin:0; color: rgba(255,255,255,0.5); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;"></p>
+            </div>
+        </div>
+        <div id="captureBody">
+            <div id="captureFront" style="width: 400px; border-radius: 40px; overflow: hidden; background: white; box-shadow: 0 20px 40px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;"></div>
+            <div id="captureBack" style="width: 400px; border-radius: 40px; overflow: hidden; background: white; box-shadow: 0 20px 40px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;"></div>
+        </div>
+        <div style="padding: 24px 50px; background: #ffffff; border-top: 1px solid #e2e8f0; text-align: center; display: flex; justify-content: space-between; align-items: center;">
+            <p style="margin: 0; font-size: 10px; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Conaprole - Catálogo Digital 2026</p>
+            <p style="margin: 0; font-size: 10px; color: #1e40af; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">Socio Cooperativo</p>
         </div>
     </div>
 
@@ -500,7 +571,7 @@
             grid.innerHTML = items.map(p => `
                 <div onclick="openProductModal('${p.sku}')" class="bg-white rounded-[1.8rem] p-2 shadow-sm border border-slate-100 flex flex-col h-full active:scale-95 transition-transform cursor-pointer overflow-hidden">
                     <div class="relative aspect-square bg-slate-50 rounded-[1.4rem] mb-2.5 overflow-hidden flex items-center justify-center p-4">
-                        <img src="${p.img || 'https://via.placeholder.com/200'}" class="w-full h-full img-blend" alt="${p.nombre}">
+                        <img src="${p.img || 'https://via.placeholder.com/200'}" class="w-full h-full img-blend" alt="${p.nombre}" crossorigin="anonymous">
                     </div>
                     <div class="px-2 pb-2 flex flex-col flex-1">
                         <h3 class="text-[10px] font-bold text-slate-800 leading-tight line-clamp-2 mb-0.5 uppercase tracking-tighter">${p.nombre}</h3>
@@ -563,43 +634,103 @@
             document.querySelectorAll('.modal-scroll-area').forEach(el => el.scrollTop = 0);
         }
 
-        async function handleGenericShare(event) {
+        async function captureAndShareFicha(event) {
             if (event) event.stopPropagation();
             if (!currentProduct) return;
 
-            const p = currentProduct;
-            const text = `📦 FICHA TÉCNICA: ${p.nombre.toUpperCase()}\n\n` +
-                         `• Marca: ${p.marca}\n` +
-                         `• SKU: ${p.sku}\n` +
-                         `• Presentación: ${p.presentacion}\n` +
-                         `• EAN: ${p.ean}\n` +
-                         `• U/Caja: ${p.caja}\n` +
-                         `• Vida Útil: ${p.vida}\n` +
-                         `• Precio: $${p.precio} (s/IVA)\n\n` +
-                         `🔗 Consulta más detalles en el catálogo.`;
+            const loader = document.getElementById('sharingLoader');
+            loader.style.display = 'flex';
 
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: `Ficha: ${p.nombre}`,
-                        text: text,
-                        url: window.location.href
-                    });
-                } catch (err) {
-                    console.log('Compartido cancelado');
-                }
-            } else {
-                const textArea = document.createElement("textarea");
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    showToast("Copiado al portapapeles");
-                } catch (err) {
-                    console.error('Error al copiar', err);
-                }
-                document.body.removeChild(textArea);
+            try {
+                // Sincronizar fecha en el header de captura
+                document.getElementById('captureDate').innerText = new Date().toLocaleDateString();
+
+                // Clones para captura
+                const front = document.getElementById('frontSide').cloneNode(true);
+                const back = document.getElementById('backSide').cloneNode(true);
+                
+                // Limpieza de UI interactiva en clones
+                const shareF = front.querySelector('.share-btn-modal');
+                if (shareF) shareF.remove();
+                front.querySelectorAll('.circle-btn-modal').forEach(b => b.remove());
+                back.querySelectorAll('.circle-btn-modal').forEach(b => b.remove());
+
+                const styleClone = (el) => {
+                    el.style.position = 'relative';
+                    el.style.height = 'auto'; 
+                    el.style.minHeight = '650px';
+                    el.style.width = '100%';
+                    el.style.transform = 'none';
+                    el.style.boxShadow = 'none';
+                    el.style.borderRadius = '0';
+                    el.classList.remove('hidden');
+                };
+
+                styleClone(front);
+                styleClone(back);
+
+                // Forzamos visibilidad de ambas secciones técnicas en la cara trasera del PDF/Imagen
+                const bNutri = back.querySelector('#contentNutri');
+                const bLogo = back.querySelector('#contentLogo');
+                bNutri.classList.remove('hidden');
+                bLogo.classList.remove('hidden');
+                bLogo.style.borderTop = '2px dashed #e2e8f0';
+                bLogo.style.marginTop = '0px';
+                
+                const tabs = back.querySelector('.flex.border-b');
+                if (tabs) tabs.remove(); 
+
+                const capFront = document.getElementById('captureFront');
+                const capBack = document.getElementById('captureBack');
+                
+                capFront.innerHTML = '';
+                capBack.innerHTML = '';
+                capFront.appendChild(front);
+                capBack.appendChild(back);
+
+                // Pequeña pausa para asegurar render
+                await new Promise(r => setTimeout(r, 600));
+
+                const canvas = await html2canvas(document.getElementById('captureArea'), {
+                    useCORS: true,
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                });
+
+                canvas.toBlob(async (blob) => {
+                    if (!blob) throw new Error("Error blob");
+                    
+                    const fileName = `Ficha_Conaprole_${currentProduct.sku}.png`;
+                    const file = new File([blob], fileName, { type: 'image/png' });
+                    
+                    loader.style.display = 'none';
+
+                    // API COMPARTIR NATIVA
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: `Ficha Técnica: ${currentProduct.nombre}`,
+                                text: `Enviando ficha oficial de ${currentProduct.nombre} (SKU: ${currentProduct.sku})`
+                            });
+                        } catch (err) {
+                            console.log('Compartir cancelado o fallido');
+                        }
+                    } else {
+                        // Fallback: Descarga directa si el navegador no soporta compartir archivos
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = fileName;
+                        link.click();
+                        showToast("Ficha guardada (Compartir no disponible)");
+                    }
+                }, 'image/png');
+
+            } catch (err) {
+                console.error("Error:", err);
+                loader.style.display = 'none';
+                showToast("No se pudo generar la imagen");
             }
         }
 
@@ -607,7 +738,7 @@
             const t = document.getElementById('toast');
             t.innerText = msg;
             t.style.opacity = '1';
-            setTimeout(() => t.style.opacity = '0', 2000);
+            setTimeout(() => t.style.opacity = '0', 2500);
         }
 
         function switchTab(event, tab) {
@@ -617,7 +748,6 @@
             document.getElementById('tabLogo').classList.toggle('active', !isNutri);
             document.getElementById('contentNutri').classList.toggle('hidden', !isNutri);
             document.getElementById('contentLogo').classList.toggle('hidden', isNutri);
-            document.querySelectorAll('.modal-scroll-area').forEach(el => el.scrollTop = 0);
         }
 
         function flipCardEvent(event) {
