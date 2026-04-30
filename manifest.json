@@ -1,20 +1,20 @@
 {
 "short_name": "ConaApp",
-"name": "ConaApp - Catálogo Digital 2026",
+<comment-tag id="1">"name": "ConaApp - Catálogo Digital 2026",</comment-tag id="1">
 "icons": [
 {
-"src": "https://www.google.com/search?q=https://www.conaprole.uy/themes/web/img/conaprole_logo.png",
+"src": "icon.png",
 "sizes": "192x192",
 "type": "image/png"
 },
 {
-"src": "https://www.google.com/search?q=https://www.conaprole.uy/themes/web/img/conaprole_logo.png",
+"src": "icon.png",
 "sizes": "512x512",
 "type": "image/png"
 }
 ],
 "start_url": "index.html",
-"display": "standalone",
+<comment-tag id="3">"display": "standalone",</comment-tag id="3">
 "theme_color": "#1e40af",
 "background_color": "#f8fafc"
 }
